@@ -117,6 +117,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   display:flex;align-items:center;justify-content:center;
 }
 .stepper button:active{background:var(--velvet-2)}
+.stepper.locked button{opacity:.28;pointer-events:none}
 .stepper .val.rand{color:var(--brass)}
 .stepper .val{
   font-family:var(--display);font-weight:800;font-size:23px;min-width:50px;text-align:center;
@@ -132,6 +133,8 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 }
 .switch.on{background:var(--jade)}
 .switch.on i{transform:translateX(24px);background:#0B2E22}
+.switch:active{filter:brightness(1.25)}
+.chip:active,.seg button:active{transform:scale(.96)}
 
 .chips{display:flex;flex-wrap:wrap;gap:9px;margin-top:14px}
 .chip{
@@ -257,9 +260,14 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
     <div class="field">
       <div><div class="label" data-t="imposters">Imposters</div><div class="hint" data-t="imposters_h">Keep it under a third of the table</div></div>
-      <div class="stepper" data-step="imposters">
+      <div class="stepper" data-step="imposters" id="st-imposters">
         <button data-d="-1" aria-label="fewer">−</button><div class="val" id="v-imposters">1</div><button data-d="1" aria-label="more">+</button>
       </div>
+    </div>
+
+    <div class="field">
+      <div><div class="label" data-t="rand">Secret imposter count</div><div class="hint" data-t="rand_h">Could be nobody, could be all of you</div></div>
+      <div class="switch" id="sw-rand"><i></i></div>
     </div>
 
     <div class="field">
@@ -275,10 +283,8 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
     </div>
 
     <div class="field">
-      <div><div class="label" data-t="hintw">Word hint</div><div class="hint" data-t="hintw_h">One clue per word. Who sees it.</div></div>
-      <div class="seg" id="seg-hintmode">
-        <button data-hm="off">—</button><button data-hm="imposter" class="on">1</button><button data-hm="all">ALL</button>
-      </div>
+      <div><div class="label" data-t="hintw">Imposter sees clue</div><div class="hint" data-t="hintw_h">One clue per word, only for them</div></div>
+      <div class="switch on" id="sw-hintw"><i></i></div>
     </div>
 
     <div class="field">
@@ -371,7 +377,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "1.1";
+const APP_VERSION = "1.2";
 
 /* ============ words ============ */
 const CATS = [
@@ -406,24 +412,24 @@ const T = {
 en:{players:"Players",players_h:"Phone goes around the table",imposters:"Imposters",imposters_h:"Keep it under a third of the table",
 timer:"Round timer",timer_h:"Minutes of arguing. 0 turns it off.",hint:"Imposter sees category",hint_h:"Gives them a fighting chance",
 lang:"Language",lang_h:"Word list",category:"Category",deal:"Deal the cards",handto:"Hand the phone to",tapto:"Tap to see your word",
-note_peek:"Nobody else looks.",next:"Hide and pass on",inplay:"round in play",firstup:"First to describe",
+note_peek:"Nobody else looks.",next:"Next player",inplay:"round in play",firstup:"First to describe",
 cat_public:"Category",pause:"Pause",resume:"Resume",reveal:"Reveal",theword:"the word was",theimposter:"the imposter",
-settings:"Settings",again:"Next round",mix:"Mix",player:"Player",word:"Word",imposter:"Imposter",
+settings:"Settings",again:"Next round",mix:"Mix",player:"Player",word:"Your word",imposter:"You are the imposter",
+rand:"Secret imposter count",rand_h:"Could be nobody, could be all of you",
 tagline:"Everyone gets the same secret word. Someone doesn't. Talk your way through it and find out who.",
-start:"Hide and start",noone:"Nobody",time:"Time",names:"Names",nameph:"Name (optional)",
-hintw:"Word hint",hintw_h:"One clue per word. Choose who sees it.",hintoff:"Off",hintimp:"Imposter",hintall:"Everyone",
-imposters_r:"Rolled in secret. Could be nobody, could be all of you.",everyone:"Everyone",
+start:"Start the round",noone:"Nobody",time:"Time",names:"Names",nameph:"Name (optional)",
+hintw:"Imposter sees clue",hintw_h:"One clue per word, only for them",everyone:"Everyone",
 tableline:"pass-and-play · {n} players"},
 hr:{players:"Igrači",players_h:"Mobitel ide u krug",imposters:"Uljezi",imposters_h:"Manje od trećine stola",
 timer:"Vrijeme runde",timer_h:"Minute rasprave. 0 gasi timer.",hint:"Uljez vidi kategoriju",hint_h:"Da ima kakve šanse",
 lang:"Jezik",lang_h:"Popis riječi",category:"Kategorija",deal:"Podijeli karte",handto:"Daj mobitel",tapto:"Dodirni da vidiš riječ",
-note_peek:"Nitko drugi ne gleda.",next:"Sakrij i predaj dalje",inplay:"runda u tijeku",firstup:"Prvi opisuje",
+note_peek:"Nitko drugi ne gleda.",next:"Sljedeći igrač",inplay:"runda u tijeku",firstup:"Prvi opisuje",
 cat_public:"Kategorija",pause:"Pauza",resume:"Nastavi",reveal:"Otkrij",theword:"riječ je bila",theimposter:"uljez",
-settings:"Postavke",again:"Nova runda",mix:"Miks",player:"Igrač",word:"Riječ",imposter:"Uljez",
+settings:"Postavke",again:"Nova runda",mix:"Miks",player:"Igrač",word:"Tvoja riječ",imposter:"Ti si uljez",
+rand:"Tajni broj uljeza",rand_h:"Može biti nitko, mogu biti svi",
 tagline:"Svi dobiju istu tajnu riječ. Netko ne dobije. Pričajte i otkrijte tko.",
-start:"Sakrij i kreni",noone:"Nitko",time:"Vrijeme",names:"Imena",nameph:"Ime (nije obavezno)",
-hintw:"Natuknica",hintw_h:"Jedna natuknica po riječi. Tko je vidi.",hintoff:"Ne",hintimp:"Uljez",hintall:"Svi",
-imposters_r:"Izvlači se u tajnosti. Može nitko, može svi.",everyone:"Svi",
+start:"Kreni s rundom",noone:"Nitko",time:"Vrijeme",names:"Imena",nameph:"Ime (nije obavezno)",
+hintw:"Uljez vidi natuknicu",hintw_h:"Jedna natuknica po riječi, samo za njega",everyone:"Svi",
 tableline:"igra u krug · {n} igrača"}
 };
 
@@ -462,7 +468,9 @@ function load(){
     if(num(d.imposters)) S.imposters = d.imposters;
     if(num(d.minutes))   S.minutes   = d.minutes;
     if(typeof d.hintCat === "boolean") S.hintCat = d.hintCat;
-    if(["off","imposter","all"].indexOf(d.hintMode) >= 0) S.hintMode = d.hintMode;
+    /* "all" was dropped as an option - fold old saves onto imposter-only */
+    if(d.hintMode === "off") S.hintMode = "off";
+    else if(d.hintMode === "imposter" || d.hintMode === "all") S.hintMode = "imposter";
     if(T[d.lang]) S.lang = d.lang;
     if(d.cat === "mix" || CATS.some(c=>c.key===d.cat)) S.cat = d.cat;
     if(Array.isArray(d.names)) S.names = d.names.map(n => typeof n==="string" ? n.slice(0,14) : "");
@@ -493,15 +501,13 @@ function paintSetup(){
   $("#app-version").textContent = "v" + APP_VERSION;
   $("#eyebrow-line").textContent = t("tableline").replace("{n}", S.players);
   $("#sw-hint").classList.toggle("on", S.hintCat);
+  $("#sw-hintw").classList.toggle("on", S.hintMode === "imposter");
+  $("#sw-rand").classList.toggle("on", rnd);
+  $("#st-imposters").classList.toggle("locked", rnd);
   $$("#seg-lang button").forEach(b=>b.classList.toggle("on", b.dataset.lang===S.lang));
-  $$("#seg-hintmode button").forEach(b=>{
-    b.classList.toggle("on", b.dataset.hm===S.hintMode);
-    b.textContent = t({off:"hintoff",imposter:"hintimp",all:"hintall"}[b.dataset.hm]);
-  });
   paintNames();
   paintChips();
   paintText();
-  $("[data-t='imposters_h']").textContent = rnd ? t("imposters_r") : t("imposters_h");
   save();
 }
 
@@ -533,7 +539,7 @@ function paintChips(){
   const mk = (key,label)=>{
     const b=document.createElement("button");
     b.className="chip"+(S.cat===key?" on":"");
-    b.textContent=label; b.onclick=()=>{S.cat=key;paintChips();};
+    b.textContent=label; b.onclick=()=>{S.cat=key;buzz(10);paintChips();save();};
     box.appendChild(b);
   };
   mk("mix", t("mix"));
@@ -602,7 +608,7 @@ function paintSeat(){
   wordEl.style.fontSize = "";              /* let the imposter rule win */
   if(!isImp) fitWord(wordEl, S.word);
   $("#front-cat").textContent = (isImp && S.hintCat) || !isImp ? catLabel(S.catKey) : "";
-  const seesClue = S.hintMode==="all" || (S.hintMode==="imposter" && isImp);
+  const seesClue = S.hintMode==="imposter" && isImp;
   $("#front-hint").textContent = seesClue ? S.clue : "";
   const last = S.seat >= S.players;
   $("#btn-next").textContent = last ? t("start") : t("next");
@@ -697,21 +703,17 @@ $$(".stepper").forEach(st=>{
   st.querySelectorAll("button").forEach(b=>{
     b.onclick = ()=>{
       const key = st.dataset.step, d = parseInt(b.dataset.d,10);
-      if(key==="imposters"){
-        if(d<0 && S.imposters===1) S.imposters = -1;
-        else if(d>0 && S.imposters===-1) S.imposters = 1;
-        else S.imposters += d;
-      } else { S[key] += d; }
+      S[key] += d;
       buzz(8); paintSetup();
     };
   });
 });
-$("#sw-hint").onclick = ()=>{ S.hintCat = !S.hintCat; paintSetup(); };
+/* every setting answers with a short buzz, so a tap is felt as well as seen */
+$("#sw-hint").onclick  = ()=>{ S.hintCat = !S.hintCat; buzz(14); paintSetup(); };
+$("#sw-hintw").onclick = ()=>{ S.hintMode = S.hintMode==="imposter" ? "off" : "imposter"; buzz(14); paintSetup(); };
+$("#sw-rand").onclick  = ()=>{ S.imposters = S.imposters===-1 ? 1 : -1; buzz(14); paintSetup(); };
 $$("#seg-lang button").forEach(b=>{
-  b.onclick = ()=>{ S.lang = b.dataset.lang; paintSetup(); };
-});
-$$("#seg-hintmode button").forEach(b=>{
-  b.onclick = ()=>{ S.hintMode = b.dataset.hm; paintSetup(); };
+  b.onclick = ()=>{ S.lang = b.dataset.lang; buzz(10); paintSetup(); };
 });
 
 /* keep the screen from sleeping mid-round where supported.

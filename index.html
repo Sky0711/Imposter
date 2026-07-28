@@ -359,7 +359,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
         <div class="v" id="first-speaker">Player 3</div>
       </div>
       <div class="clock" id="clock">4:00</div>
-      <div class="kv">
+      <div class="kv" id="play-cat-box">
         <div class="eyebrow" data-t="cat_public">Category</div>
         <div class="v" id="play-cat">—</div>
       </div>
@@ -395,7 +395,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "1.8";
+const APP_VERSION = "1.9";
 
 /* ============ words ============ */
 const CATS = [
@@ -434,7 +434,7 @@ countries:["Italija|ima oblik čizme","Francuska|toranj","Španjolska|flamenko",
 /* ============ ui strings ============ */
 const T = {
 en:{players:"Players",players_h:"Around the table",imposters:"Imposters",imposters_h:"Under a third of the table",
-timer:"Round timer",timer_h:"Minutes. 0 = no timer",hint:"Imposter sees category",hint_h:"A fighting chance",
+timer:"Round timer",timer_h:"Minutes. 0 = no timer",hint:"Show category",hint_h:"To everyone, or to nobody",
 lang:"Language",lang_h:"Word list",category:"Category",deal:"Start the game",handto:"Hand the phone to",tapto:"↕ Drag to peek",
 note_peek:"Nobody else looks.",next:"Next player",inplay:"round in play",firstup:"First to describe",
 cat_public:"Category",pause:"Pause",resume:"Resume",reveal:"Reveal",theword:"the word was",theimposter:"the imposter",
@@ -445,7 +445,7 @@ start:"Start the round",noone:"Nobody",time:"Time",names:"Names",nameph:"Name (o
 hintw:"Imposter sees clue",hintw_h:"One clue, only for them",everyone:"Everyone",
 tableline:"pass-and-play · {n} players"},
 hr:{players:"Igrači",players_h:"Ide u krug",imposters:"Uljezi",imposters_h:"Manje od trećine stola",
-timer:"Vrijeme runde",timer_h:"Minute. 0 = bez timera",hint:"Uljez vidi kategoriju",hint_h:"Da ima kakve šanse",
+timer:"Vrijeme runde",timer_h:"Minute. 0 = bez timera",hint:"Prikaži kategoriju",hint_h:"Svima ili nikome",
 lang:"Jezik",lang_h:"Popis riječi",category:"Kategorija",deal:"Pokreni igru",handto:"Daj mobitel",tapto:"↕ Povuci da proviriš",
 note_peek:"Nitko drugi ne gleda.",next:"Sljedeći igrač",inplay:"runda u tijeku",firstup:"Prvi opisuje",
 cat_public:"Kategorija",pause:"Pauza",resume:"Nastavi",reveal:"Otkrij",theword:"riječ je bila",theimposter:"uljez",
@@ -640,7 +640,8 @@ function paintSeat(){
   wordEl.textContent = isImp ? "?" : S.word;
   wordEl.style.fontSize = "";              /* let the imposter rule win */
   if(!isImp) fitWord(wordEl, S.word);
-  $("#front-cat").textContent = (isImp && S.hintCat) || !isImp ? catLabel(S.catKey) : "";
+  /* all or nobody - showing it to the table leaked it to the imposter anyway */
+  $("#front-cat").textContent = S.hintCat ? catLabel(S.catKey) : "";
   const seesClue = S.hintMode==="imposter" && isImp;
   $("#front-hint").textContent = seesClue ? S.clue : "";
   const last = S.seat >= S.players;
@@ -712,23 +713,41 @@ const Peek = (function(){
 
 function hideCard(){ Peek.close(); }
 
-$("#btn-next").onclick = ()=>{
+/* A touch that starts on the card and ends over the button leaves Chrome
+   with no common click target, so that press does nothing and the button
+   looks like it needs pressing twice. Act on the touch release itself and
+   swallow the synthetic click that may follow it. */
+function onTap(el, fn){
+  let touchedAt = 0;
+  el.addEventListener("pointerup", e => {
+    if(e.pointerType === "mouse") return;
+    touchedAt = Date.now();
+    fn();
+  });
+  el.addEventListener("click", () => {
+    if(Date.now() - touchedAt < 700) return;   /* already handled by touch */
+    fn();
+  });
+}
+
+onTap($("#btn-next"), ()=>{
   hideCard();
   if(S.seat >= S.players){ startRound(); }
   else { S.seat++; paintSeat(); }
-};
+});
 
 /* step back a seat, or out to settings from the first one */
-$("#btn-back").onclick = ()=>{
+onTap($("#btn-back"), ()=>{
   hideCard();
   if(S.seat <= 1){ paintSetup(); show("s-setup"); }
   else { S.seat--; paintSeat(); }
-};
+});
 
 /* ============ round ============ */
 function startRound(){
   $("#first-speaker").textContent = seatLabel(S.first);
   $("#play-cat").textContent = catLabel(S.catKey);
+  $("#play-cat-box").style.display = S.hintCat ? "" : "none";
   S.left = S.minutes*60;
   S.running = S.minutes > 0;
   paintClock();

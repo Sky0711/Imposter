@@ -64,6 +64,8 @@ body::before{
   font-family:var(--body);font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
   color:var(--dim);
 }
+.toprow{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+#app-version{color:rgba(244,236,224,.55);letter-spacing:.04em;flex:none}
 .screen{display:none;flex:1;flex-direction:column}
 .screen.on{display:flex}
 h1{font-family:var(--display);font-weight:800;font-size:clamp(38px,11.5vw,60px);line-height:.95;letter-spacing:-.02em;text-transform:uppercase}
@@ -237,7 +239,10 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
   <!-- SETUP -->
   <section class="screen on" id="s-setup">
-    <div class="eyebrow">pass-and-play · <span id="pcount-eyebrow">4</span> players</div>
+    <div class="eyebrow toprow">
+      <span id="eyebrow-line">pass-and-play · 4 players</span>
+      <span id="app-version">v1.1</span>
+    </div>
     <h1>Impo<span class="split">s</span>ter</h1>
     <p class="sub" id="tagline">Everyone gets the same secret word. Someone doesn't. Talk your way through it and find out who.</p>
 
@@ -364,6 +369,10 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 (function(){
 "use strict";
 
+/* shown on the setup screen so you can always tell which build is installed.
+   bump this AND the CACHE name in sw.js together when deploying. */
+const APP_VERSION = "1.1";
+
 /* ============ words ============ */
 const CATS = [
   {key:"food",   en:"Food & drink", hr:"Hrana i piće"},
@@ -403,7 +412,8 @@ settings:"Settings",again:"Next round",mix:"Mix",player:"Player",word:"Word",imp
 tagline:"Everyone gets the same secret word. Someone doesn't. Talk your way through it and find out who.",
 start:"Hide and start",noone:"Nobody",time:"Time",names:"Names",nameph:"Name (optional)",
 hintw:"Word hint",hintw_h:"One clue per word. Choose who sees it.",hintoff:"Off",hintimp:"Imposter",hintall:"Everyone",
-imposters_r:"Rolled in secret. Could be nobody, could be all of you.",everyone:"Everyone"},
+imposters_r:"Rolled in secret. Could be nobody, could be all of you.",everyone:"Everyone",
+tableline:"pass-and-play · {n} players"},
 hr:{players:"Igrači",players_h:"Mobitel ide u krug",imposters:"Uljezi",imposters_h:"Manje od trećine stola",
 timer:"Vrijeme runde",timer_h:"Minute rasprave. 0 gasi timer.",hint:"Uljez vidi kategoriju",hint_h:"Da ima kakve šanse",
 lang:"Jezik",lang_h:"Popis riječi",category:"Kategorija",deal:"Podijeli karte",handto:"Daj mobitel",tapto:"Dodirni da vidiš riječ",
@@ -413,7 +423,8 @@ settings:"Postavke",again:"Nova runda",mix:"Miks",player:"Igrač",word:"Riječ",
 tagline:"Svi dobiju istu tajnu riječ. Netko ne dobije. Pričajte i otkrijte tko.",
 start:"Sakrij i kreni",noone:"Nitko",time:"Vrijeme",names:"Imena",nameph:"Ime (nije obavezno)",
 hintw:"Natuknica",hintw_h:"Jedna natuknica po riječi. Tko je vidi.",hintoff:"Ne",hintimp:"Uljez",hintall:"Svi",
-imposters_r:"Izvlači se u tajnosti. Može nitko, može svi.",everyone:"Svi"}
+imposters_r:"Izvlači se u tajnosti. Može nitko, može svi.",everyone:"Svi",
+tableline:"igra u krug · {n} igrača"}
 };
 
 /* ============ state ============ */
@@ -479,7 +490,8 @@ function paintSetup(){
   $("#v-imposters").textContent = rnd ? "?" : S.imposters;
   $("#v-imposters").classList.toggle("rand", rnd);
   $("#v-minutes").textContent = S.minutes;
-  $("#pcount-eyebrow").textContent = S.players;
+  $("#app-version").textContent = "v" + APP_VERSION;
+  $("#eyebrow-line").textContent = t("tableline").replace("{n}", S.players);
   $("#sw-hint").classList.toggle("on", S.hintCat);
   $$("#seg-lang button").forEach(b=>b.classList.toggle("on", b.dataset.lang===S.lang));
   $$("#seg-hintmode button").forEach(b=>{

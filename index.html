@@ -27,6 +27,7 @@
   --signal:#E8334A;
   --signal-deep:#C4102A;
   --blue:#16359B;
+  --player:#7AB0FF;   /* bright blue, 6.9:1 on the word card */
   --card:#241340;      /* word card - bone on this is 14.4:1 */
   --card-imp:#8E0A1E;  /* imposter card - bone on this is 8.1:1 */
   --dim:rgba(244,236,224,.72);
@@ -154,6 +155,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   background:linear-gradient(160deg,var(--velvet-2),var(--velvet));
   border:1px solid rgba(244,236,224,.14);
   box-shadow:0 26px 60px -24px rgba(0,0,0,.85);
+  touch-action:none;   /* the swipe is ours, not the browser's */
   display:flex;align-items:center;justify-content:center;
   transition:transform .18s ease, box-shadow .18s ease;
 }
@@ -216,9 +218,11 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   color:var(--dim-2);   /* 72% fell to 4.0:1 on the red card, 82% clears it */
 }
 .front .badge{
-  font-family:var(--body);font-weight:700;font-size:15px;letter-spacing:.08em;text-transform:uppercase;
-  padding:10px 18px;border-radius:99px;background:rgba(244,236,224,.16);color:var(--bone);
+  font-family:var(--body);font-weight:800;font-size:16px;letter-spacing:.1em;text-transform:uppercase;
+  padding:10px 18px;border-radius:99px;
+  background:rgba(122,176,255,.15);border:1.5px solid var(--player);color:var(--player);
 }
+.role-imposter .badge{background:rgba(244,236,224,.16);border-color:transparent;color:var(--bone)}
 
 /* ---- play ---- */
 .clock{font-family:var(--display);font-weight:800;font-size:clamp(64px,21vw,104px);line-height:.95;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
@@ -377,7 +381,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "1.4";
+const APP_VERSION = "1.5";
 
 /* ============ words ============ */
 const CATS = [
@@ -417,10 +421,10 @@ countries:["Italija|ima oblik čizme","Francuska|toranj i bageta","Španjolska|f
 const T = {
 en:{players:"Players",players_h:"Around the table",imposters:"Imposters",imposters_h:"Under a third of the table",
 timer:"Round timer",timer_h:"Minutes. 0 = no timer",hint:"Imposter sees category",hint_h:"A fighting chance",
-lang:"Language",lang_h:"Word list",category:"Category",deal:"Deal the cards",handto:"Hand the phone to",tapto:"Tap to see your word",
+lang:"Language",lang_h:"Word list",category:"Category",deal:"Deal the cards",handto:"Hand the phone to",tapto:"↑ Swipe up for your word",
 note_peek:"Nobody else looks.",next:"Next player",inplay:"round in play",firstup:"First to describe",
 cat_public:"Category",pause:"Pause",resume:"Resume",reveal:"Reveal",theword:"the word was",theimposter:"the imposter",
-settings:"Settings",again:"Next round",mix:"All",player:"Player",word:"Your word",imposter:"You are the imposter",
+settings:"Settings",again:"Next round",mix:"All",player:"Player",word:"Player",imposter:"You are the imposter",
 rand:"Secret imposter count",rand_h:"Could be nobody, could be all",
 tagline:"Everyone gets the same secret word. Someone doesn't. Find out who.",
 start:"Start the round",noone:"Nobody",time:"Time",names:"Names",nameph:"Name (optional)",
@@ -428,10 +432,10 @@ hintw:"Imposter sees clue",hintw_h:"One clue, only for them",everyone:"Everyone"
 tableline:"pass-and-play · {n} players"},
 hr:{players:"Igrači",players_h:"Ide u krug",imposters:"Uljezi",imposters_h:"Manje od trećine stola",
 timer:"Vrijeme runde",timer_h:"Minute. 0 = bez timera",hint:"Uljez vidi kategoriju",hint_h:"Da ima kakve šanse",
-lang:"Jezik",lang_h:"Popis riječi",category:"Kategorija",deal:"Podijeli karte",handto:"Daj mobitel",tapto:"Dodirni da vidiš riječ",
+lang:"Jezik",lang_h:"Popis riječi",category:"Kategorija",deal:"Podijeli karte",handto:"Daj mobitel",tapto:"↑ Povuci prema gore",
 note_peek:"Nitko drugi ne gleda.",next:"Sljedeći igrač",inplay:"runda u tijeku",firstup:"Prvi opisuje",
 cat_public:"Kategorija",pause:"Pauza",resume:"Nastavi",reveal:"Otkrij",theword:"riječ je bila",theimposter:"uljez",
-settings:"Postavke",again:"Nova runda",mix:"Sve",player:"Igrač",word:"Tvoja riječ",imposter:"Ti si uljez",
+settings:"Postavke",again:"Nova runda",mix:"Sve",player:"Igrač",word:"Igrač",imposter:"Ti si uljez",
 rand:"Tajni broj uljeza",rand_h:"Može nitko, mogu svi",
 tagline:"Svi dobiju istu tajnu riječ. Netko ne. Otkrijte tko.",
 start:"Kreni s rundom",noone:"Nitko",time:"Vrijeme",names:"Imena",nameph:"Ime (nije obavezno)",
@@ -630,17 +634,27 @@ function paintSeat(){
   $("#btn-next").disabled = true;
 }
 
-/* tap to reveal, tap again to hide. the word is never on screen while the
-   phone is being handed over, because the button hides it before advancing */
+/* swipe up on the card to reveal, down to hide again. a deliberate gesture,
+   so a stray tap while the phone is being passed cannot expose the word.
+   the button hides it before advancing, so it is never up during a hand-off */
 function hideCard(){ $("#card").classList.remove("open","held"); }
 
-(function bindTap(){
-  const card = $("#card");
-  card.addEventListener("click", ()=>{
-    const opened = card.classList.toggle("open");
-    card.classList.toggle("held", opened);
-    if(opened){ buzz(12); $("#btn-next").disabled = false; }
+(function bindSwipe(){
+  const card = $("#card"), THRESHOLD = 40;
+  let y0 = null;
+  const openIt = ()=>{
+    if(card.classList.contains("open")) return;
+    card.classList.add("open","held"); buzz(12);
+    $("#btn-next").disabled = false;
+  };
+  card.addEventListener("pointerdown", e=>{ y0 = e.clientY; });
+  card.addEventListener("pointerup", e=>{
+    if(y0 === null) return;
+    const dy = y0 - e.clientY; y0 = null;
+    if(dy > THRESHOLD) openIt();
+    else if(dy < -THRESHOLD) hideCard();
   });
+  card.addEventListener("pointercancel", ()=>{ y0 = null; });
   card.addEventListener("contextmenu", e=>e.preventDefault());
 })();
 

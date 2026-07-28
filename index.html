@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1A0F2E">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -15,7 +15,7 @@
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=DM+Mono:wght@400;500&family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
   --ink:#1A0F2E;
@@ -27,12 +27,14 @@
   --signal:#E8334A;
   --signal-deep:#C4102A;
   --blue:#16359B;
-  --slate:#A7A7AB;
-  --slate-2:#919197;
-  --dim:rgba(244,236,224,.55);
-  --display:'Anton','Haettenschweiler','Arial Narrow',Impact,sans-serif;
+  --card:#241340;      /* word card - bone on this is 14.4:1 */
+  --card-imp:#8E0A1E;  /* imposter card - bone on this is 8.1:1 */
+  --dim:rgba(244,236,224,.72);
+  --dim-2:rgba(244,236,224,.82);
+  /* one family throughout; weight carries the hierarchy, not a second face */
   --body:'Sora',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-  --mono:'DM Mono',ui-monospace,'SF Mono',Menlo,monospace;
+  --display:var(--body);
+  --mono:var(--body);
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
@@ -59,23 +61,32 @@ body::before{
 
 /* ---- shared bits ---- */
 .eyebrow{
-  font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;
+  font-family:var(--body);font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
   color:var(--dim);
 }
 .screen{display:none;flex:1;flex-direction:column}
 .screen.on{display:flex}
-h1{font-family:var(--display);font-size:clamp(46px,15vw,76px);line-height:.86;letter-spacing:.01em;text-transform:uppercase}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(38px,11.5vw,60px);line-height:.95;letter-spacing:-.02em;text-transform:uppercase}
 h1 .split{color:var(--signal)}
-.sub{margin-top:10px;color:var(--dim);font-size:14px;line-height:1.5;max-width:34ch}
+.sub{margin-top:10px;color:var(--dim-2);font-size:15px;line-height:1.55;max-width:34ch}
 
 button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .btn{
   display:flex;align-items:center;justify-content:center;gap:10px;
-  width:100%;padding:19px 20px;border-radius:16px;
+  width:100%;min-height:60px;padding:19px 20px;border-radius:16px;
   background:var(--bone);color:var(--ink);
-  font-weight:700;font-size:17px;letter-spacing:.01em;
+  font-weight:700;font-size:18px;letter-spacing:.005em;line-height:1.2;
   transition:transform .12s ease, filter .12s ease;
 }
+/* plain back affordance on the deal screen.
+   NOT .back - the card's reverse face already owns that class */
+.topbar{display:flex;align-items:center;gap:12px;min-height:44px}
+.backbtn{
+  display:flex;align-items:center;justify-content:center;
+  width:44px;height:44px;margin-left:-10px;border-radius:12px;
+  font-size:26px;line-height:1;color:var(--dim-2);flex:none;
+}
+.backbtn:active{background:var(--velvet)}
 .btn:active{transform:scale(.975)}
 .btn.ghost{background:transparent;color:var(--bone);border:1.5px solid rgba(244,236,224,.22);font-weight:600}
 .btn.brass{background:var(--brass);color:#2A1A05}
@@ -84,25 +95,30 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .spacer{flex:1;min-height:16px}
 
 /* ---- setup ---- */
+/* label and control share a row when they fit; the control drops to its own
+   line when they do not, so bigger targets never push off a narrow screen */
 .field{
-  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px 14px;
+  flex-wrap:wrap;
   padding:15px 8px 15px 4px;
   border-bottom:1px solid rgba(244,236,224,.10);
 }
-.field .label{font-size:15px;font-weight:600}
-.field .hint{font-size:12px;color:var(--dim);margin-top:3px}
-.stepper{display:flex;align-items:center;gap:4px;flex:none}
+.field > :first-child{flex:1 1 165px;min-width:0}
+.field > :last-child{margin-left:auto}
+.field .label{font-size:16px;font-weight:600}
+.field .hint{font-size:13.5px;color:var(--dim);margin-top:4px;line-height:1.4}
+.stepper{display:flex;align-items:center;gap:6px;flex:none}
 .stepper button{
-  width:42px;height:42px;border-radius:12px;
-  background:var(--velvet);border:1px solid rgba(244,236,224,.10);
-  font-size:22px;line-height:1;font-weight:400;color:var(--bone);
+  width:50px;height:50px;border-radius:14px;
+  background:var(--velvet);border:1px solid rgba(244,236,224,.14);
+  font-size:26px;line-height:1;font-weight:600;color:var(--bone);
   display:flex;align-items:center;justify-content:center;
 }
 .stepper button:active{background:var(--velvet-2)}
 .stepper .val.rand{color:var(--brass)}
 .stepper .val{
-  font-family:var(--display);font-size:27px;min-width:52px;text-align:center;
-  line-height:1;padding-top:3px;
+  font-family:var(--display);font-weight:800;font-size:23px;min-width:50px;text-align:center;
+  line-height:1;
 }
 .switch{
   width:56px;height:32px;border-radius:20px;background:var(--velvet);
@@ -117,12 +133,12 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 .chips{display:flex;flex-wrap:wrap;gap:9px;margin-top:14px}
 .chip{
-  padding:11px 15px;border-radius:12px;font-size:14px;font-weight:600;
-  background:var(--velvet);border:1.5px solid transparent;color:var(--dim);
+  min-height:48px;padding:12px 17px;border-radius:13px;font-size:15.5px;font-weight:600;
+  background:var(--velvet);border:1.5px solid transparent;color:var(--dim-2);
 }
 .chip.on{background:transparent;border-color:var(--brass);color:var(--brass)}
-.seg{display:flex;gap:4px;background:var(--velvet);border-radius:12px;padding:4px;flex:none}
-.seg button{padding:9px 15px;border-radius:9px;font-size:13px;font-weight:700;color:var(--dim);font-family:var(--mono);letter-spacing:.06em}
+.seg{display:flex;gap:4px;background:var(--velvet);border-radius:13px;padding:4px;flex:none}
+.seg button{min-height:44px;padding:10px 16px;border-radius:10px;font-size:14.5px;font-weight:700;color:var(--dim-2);font-family:var(--body);letter-spacing:.02em}
 .seg button.on{background:var(--bone);color:var(--ink)}
 
 /* ---- the card ---- */
@@ -151,62 +167,67 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .card .front{opacity:0;transition:opacity .16s ease .04s}
 .card.open .front{opacity:1}
 .hint-line{
-  font-size:17px;font-style:italic;line-height:1.4;color:rgba(26,15,46,.72);
-  max-width:22ch;margin-top:2px;
+  font-size:17.5px;line-height:1.45;color:var(--dim-2);
+  max-width:24ch;margin-top:2px;
 }
-.role-imposter .hint-line{color:var(--signal-deep)}
-.rev-hint{font-size:15px;font-style:italic;color:var(--dim);text-align:center;max-width:26ch;margin-top:-8px}
-.card .front{background:linear-gradient(165deg,var(--slate),var(--slate-2));color:var(--ink)}
-.seat-num{font-family:var(--display);font-size:110px;line-height:.82;color:var(--brass)}
-.seat-name{font-family:var(--display);font-size:32px;line-height:1;text-transform:uppercase;letter-spacing:.02em;word-break:break-word;max-width:100%}
+.rev-hint{font-size:16px;color:var(--dim-2);text-align:center;max-width:28ch;margin-top:-8px}
+/* the whole card carries the role, not just the text colour - readable
+   across the table, and the badge still says it in words for anyone
+   who cannot rely on the colour */
+.card .front{background:linear-gradient(165deg,#2E1852,var(--card));color:var(--bone)}
+.card.role-imposter .front{background:linear-gradient(165deg,#A50D22,var(--card-imp))}
+.seat-num{font-family:var(--display);font-weight:800;font-size:88px;line-height:.9;color:var(--brass);letter-spacing:-.03em}
+.seat-name{font-family:var(--display);font-weight:700;font-size:27px;line-height:1.15;letter-spacing:-.01em;word-break:break-word;max-width:100%}
 
 /* ---- name entry ---- */
 .names{display:flex;flex-direction:column;gap:8px;margin-top:12px}
 .namerow{display:flex;align-items:center;gap:12px}
 .namerow .n{
-  font-family:var(--display);font-size:26px;line-height:1;width:34px;text-align:center;
-  color:var(--brass);flex:none;padding-top:4px;
+  font-family:var(--display);font-weight:800;font-size:20px;line-height:1;width:30px;text-align:center;
+  color:var(--brass);flex:none;
 }
 .namerow input{
-  flex:1;min-width:0;font:inherit;font-size:16px;font-weight:600;
+  flex:1;min-width:0;font:inherit;font-size:17px;font-weight:600;min-height:52px;
   background:var(--velvet);color:var(--bone);
-  border:1px solid rgba(244,236,224,.10);border-radius:12px;
-  padding:13px 14px;outline:none;
+  border:1px solid rgba(244,236,224,.14);border-radius:13px;
+  padding:14px 15px;outline:none;
   -webkit-user-select:text;user-select:text;
 }
-.namerow input::placeholder{color:rgba(244,236,224,.30);font-weight:400}
+.namerow input::placeholder{color:rgba(244,236,224,.52);font-weight:400}
 .namerow input:focus{border-color:var(--brass)}
-.thumbhint{
-  width:64px;height:64px;border-radius:50%;border:2px dashed rgba(244,236,224,.3);
-  display:flex;align-items:center;justify-content:center;font-size:26px;
-  animation:pulse 2.2s ease-in-out infinite;
+.tapcue{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  min-height:56px;padding:14px 24px;border-radius:99px;
+  background:rgba(244,236,224,.12);border:1.5px solid rgba(244,236,224,.28);
+  font-size:17px;font-weight:700;color:var(--bone);
+  animation:pulse 2.4s ease-in-out infinite;
 }
-@keyframes pulse{0%,100%{transform:scale(1);opacity:.65}50%{transform:scale(1.08);opacity:1}}
-.word{font-family:var(--display);font-size:clamp(44px,13.5vw,68px);line-height:.92;text-transform:uppercase;color:var(--blue);word-break:break-word}
-.role-imposter .word{color:var(--signal-deep);font-size:clamp(94px,31vw,152px);line-height:.82}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:.78}50%{transform:scale(1.04);opacity:1}}
+/* sentence case, not caps - word shape is a real reading cue */
+.word{font-family:var(--display);font-weight:800;font-size:clamp(36px,10.5vw,56px);line-height:1.02;letter-spacing:-.02em;color:var(--bone);overflow-wrap:break-word;hyphens:none}
+.role-imposter .word{font-size:clamp(92px,30vw,140px);line-height:.9}
 .cat-tag{
-  font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;
-  color:rgba(26,15,46,.58);
+  font-family:var(--body);font-size:14px;font-weight:600;letter-spacing:.04em;
+  color:var(--dim-2);   /* 72% fell to 4.0:1 on the red card, 82% clears it */
 }
 .front .badge{
-  font-family:var(--mono);font-weight:500;font-size:15px;letter-spacing:.2em;text-transform:uppercase;
-  padding:9px 16px;border-radius:99px;background:var(--blue);color:#E8E8EC;
+  font-family:var(--body);font-weight:700;font-size:15px;letter-spacing:.08em;text-transform:uppercase;
+  padding:10px 18px;border-radius:99px;background:rgba(244,236,224,.16);color:var(--bone);
 }
-.role-imposter .badge{background:var(--signal-deep);color:#F2E6E8}
 
 /* ---- play ---- */
-.clock{font-family:var(--display);font-size:clamp(76px,26vw,124px);line-height:.85;letter-spacing:.02em}
+.clock{font-family:var(--display);font-weight:800;font-size:clamp(64px,21vw,104px);line-height:.95;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
 .clock.low{color:var(--signal)}
-.kv{display:flex;flex-direction:column;align-items:center;gap:6px}
-.kv .v{font-family:var(--display);font-size:30px;text-transform:uppercase}
-.big-word{font-family:var(--display);font-size:clamp(44px,14vw,72px);line-height:.9;text-transform:uppercase;color:var(--brass);word-break:break-word;text-align:center}
+.kv{display:flex;flex-direction:column;align-items:center;gap:8px}
+.kv .v{font-family:var(--display);font-weight:700;font-size:25px;text-align:center;line-height:1.2}
+.big-word{font-family:var(--display);font-weight:800;font-size:clamp(38px,11vw,58px);line-height:1.05;letter-spacing:-.02em;color:var(--brass);overflow-wrap:break-word;text-align:center}
 .imp-list{display:flex;flex-wrap:wrap;gap:9px;justify-content:center}
 .imp-pill{
-  font-family:var(--display);font-size:22px;padding:9px 17px 7px;border-radius:12px;
-  background:var(--signal);color:#fff;text-transform:uppercase;
+  font-family:var(--display);font-weight:700;font-size:20px;padding:11px 18px;border-radius:13px;
+  background:var(--signal-deep);color:#fff;
 }
-.imp-pill.none{background:var(--jade);color:#08281D}
-.imp-pill.all{background:var(--signal);color:#fff;font-size:30px;padding:12px 26px 9px}
+.imp-pill.none{background:#0E7A57;color:#EAFBF4}
+.imp-pill.all{background:var(--signal-deep);color:#fff;font-size:25px;padding:13px 26px}
 .center{text-align:center}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -276,15 +297,17 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
   <!-- DEAL -->
   <section class="screen" id="s-deal">
-    <div class="eyebrow"><span id="deal-progress">1 / 4</span></div>
+    <div class="topbar">
+      <button class="backbtn" id="btn-back" aria-label="Back">‹</button>
+      <div class="eyebrow"><span id="deal-progress">1 / 4</span></div>
+    </div>
     <div class="stage">
       <div class="card" id="card">
         <div class="face back">
           <div class="eyebrow" data-t="handto">Hand the phone to</div>
           <div class="seat-num" id="seat-num">1</div>
           <div class="seat-name" id="seat-name"></div>
-          <div class="thumbhint">👆</div>
-          <div class="eyebrow" data-t="holdto">Press and hold</div>
+          <div class="tapcue" data-t="tapto">Tap to see your word</div>
         </div>
         <div class="face front" id="front">
           <div class="badge" id="front-badge">Word</div>
@@ -293,9 +316,9 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
           <div class="hint-line" id="front-hint"></div>
         </div>
       </div>
-      <div class="eyebrow center" id="deal-note" data-t="note_peek">Nobody else looks. Release to hide.</div>
+      <div class="eyebrow center" id="deal-note" data-t="note_peek">Nobody else looks.</div>
     </div>
-    <button class="btn" id="btn-next" disabled data-t="next">Pass it on</button>
+    <button class="btn" id="btn-next" disabled data-t="next">Hide and pass on</button>
   </section>
 
   <!-- PLAY -->
@@ -373,22 +396,22 @@ sports:["Nogomet|cijeli svijet gleda","Košarka|visoki ljudi","Boks|rukavice","�
 const T = {
 en:{players:"Players",players_h:"Phone goes around the table",imposters:"Imposters",imposters_h:"Keep it under a third of the table",
 timer:"Round timer",timer_h:"Minutes of arguing. 0 turns it off.",hint:"Imposter sees category",hint_h:"Gives them a fighting chance",
-lang:"Language",lang_h:"Word list",category:"Category",deal:"Deal the cards",handto:"Hand the phone to",holdto:"Press and hold",
-note_peek:"Nobody else looks. Release to hide.",next:"Pass it on",inplay:"round in play",firstup:"First to describe",
+lang:"Language",lang_h:"Word list",category:"Category",deal:"Deal the cards",handto:"Hand the phone to",tapto:"Tap to see your word",
+note_peek:"Nobody else looks.",next:"Hide and pass on",inplay:"round in play",firstup:"First to describe",
 cat_public:"Category",pause:"Pause",resume:"Resume",reveal:"Reveal",theword:"the word was",theimposter:"the imposter",
 settings:"Settings",again:"Next round",mix:"Mix",player:"Player",word:"Word",imposter:"Imposter",
 tagline:"Everyone gets the same secret word. Someone doesn't. Talk your way through it and find out who.",
-start:"Start the round",noone:"Nobody",time:"Time",names:"Names",nameph:"Name (optional)",
+start:"Hide and start",noone:"Nobody",time:"Time",names:"Names",nameph:"Name (optional)",
 hintw:"Word hint",hintw_h:"One clue per word. Choose who sees it.",hintoff:"Off",hintimp:"Imposter",hintall:"Everyone",
 imposters_r:"Rolled in secret. Could be nobody, could be all of you.",everyone:"Everyone"},
 hr:{players:"Igrači",players_h:"Mobitel ide u krug",imposters:"Uljezi",imposters_h:"Manje od trećine stola",
 timer:"Vrijeme runde",timer_h:"Minute rasprave. 0 gasi timer.",hint:"Uljez vidi kategoriju",hint_h:"Da ima kakve šanse",
-lang:"Jezik",lang_h:"Popis riječi",category:"Kategorija",deal:"Podijeli karte",handto:"Daj mobitel",holdto:"Pritisni i drži",
-note_peek:"Nitko drugi ne gleda. Pusti da sakriješ.",next:"Predaj dalje",inplay:"runda u tijeku",firstup:"Prvi opisuje",
+lang:"Jezik",lang_h:"Popis riječi",category:"Kategorija",deal:"Podijeli karte",handto:"Daj mobitel",tapto:"Dodirni da vidiš riječ",
+note_peek:"Nitko drugi ne gleda.",next:"Sakrij i predaj dalje",inplay:"runda u tijeku",firstup:"Prvi opisuje",
 cat_public:"Kategorija",pause:"Pauza",resume:"Nastavi",reveal:"Otkrij",theword:"riječ je bila",theimposter:"uljez",
-settings:"Postavke",again:"Sljedeća runda",mix:"Miks",player:"Igrač",word:"Riječ",imposter:"Uljez",
+settings:"Postavke",again:"Nova runda",mix:"Miks",player:"Igrač",word:"Riječ",imposter:"Uljez",
 tagline:"Svi dobiju istu tajnu riječ. Netko ne dobije. Pričajte i otkrijte tko.",
-start:"Kreni",noone:"Nitko",time:"Vrijeme",names:"Imena",nameph:"Ime (nije obavezno)",
+start:"Sakrij i kreni",noone:"Nitko",time:"Vrijeme",names:"Imena",nameph:"Ime (nije obavezno)",
 hintw:"Natuknica",hintw_h:"Jedna natuknica po riječi. Tko je vidi.",hintoff:"Ne",hintimp:"Uljez",hintall:"Svi",
 imposters_r:"Izvlači se u tajnosti. Može nitko, može svi.",everyone:"Svi"}
 };
@@ -403,6 +426,37 @@ const t = k => T[S.lang][k] || k;
 const buzz = ms => { if(navigator.vibrate) try{navigator.vibrate(ms);}catch(e){} };
 
 function show(id){ $$(".screen").forEach(el=>el.classList.toggle("on", el.id===id)); }
+
+/* ============ remembering the table ============ */
+/* same friends, same settings most nights - do not make them retype it */
+const SAVE_KEY = "imposter.setup.v1";
+
+function save(){
+  try{
+    localStorage.setItem(SAVE_KEY, JSON.stringify({
+      players:S.players, imposters:S.imposters, minutes:S.minutes,
+      hintCat:S.hintCat, hintMode:S.hintMode, lang:S.lang, cat:S.cat,
+      names:S.names.slice(0,16)
+    }));
+  }catch(e){}
+}
+
+function load(){
+  try{
+    const raw = localStorage.getItem(SAVE_KEY);
+    if(!raw) return;
+    const d = JSON.parse(raw) || {};
+    const num = v => typeof v==="number" && isFinite(v);
+    if(num(d.players))   S.players   = d.players;
+    if(num(d.imposters)) S.imposters = d.imposters;
+    if(num(d.minutes))   S.minutes   = d.minutes;
+    if(typeof d.hintCat === "boolean") S.hintCat = d.hintCat;
+    if(["off","imposter","all"].indexOf(d.hintMode) >= 0) S.hintMode = d.hintMode;
+    if(T[d.lang]) S.lang = d.lang;
+    if(d.cat === "mix" || CATS.some(c=>c.key===d.cat)) S.cat = d.cat;
+    if(Array.isArray(d.names)) S.names = d.names.map(n => typeof n==="string" ? n.slice(0,14) : "");
+  }catch(e){}
+}
 
 function clamp(){
   S.players = Math.max(3, Math.min(16, S.players));
@@ -436,6 +490,7 @@ function paintSetup(){
   paintChips();
   paintText();
   $("[data-t='imposters_h']").textContent = rnd ? t("imposters_r") : t("imposters_h");
+  save();
 }
 
 /* label for a seat: "3" alone, or "3 · Marko" */
@@ -454,7 +509,7 @@ function paintNames(){
     inp.setAttribute("autocapitalize","words");
     inp.setAttribute("enterkeyhint","next");
     inp.value = S.names[i-1] || "";
-    inp.oninput = () => { S.names[i-1] = inp.value; };
+    inp.oninput = () => { S.names[i-1] = inp.value; save(); };
     row.appendChild(num); row.appendChild(inp);
     box.appendChild(row);
   }
@@ -474,6 +529,17 @@ function paintChips(){
 }
 
 function catLabel(key){ const c = CATS.find(x=>x.key===key); return c ? c[S.lang] : ""; }
+
+/* Croatian runs long - "Poljoprivrednik" would break across lines and read
+   as two nonsense halves. Shrink to fit the longest single word instead. */
+function fitWord(el, w){
+  const longest = String(w||"").split(/\s+/).reduce((m,s)=>Math.max(m,s.length), 0);
+  el.style.fontSize =
+    longest <= 8  ? "" :
+    longest <= 12 ? "clamp(31px,8.8vw,48px)" :
+    longest <= 16 ? "clamp(26px,7.2vw,40px)" :
+                    "clamp(21px,5.9vw,32px)";
+}
 
 /* ============ dealing ============ */
 /* U-shaped draw over 0..n: the two extremes are the likeliest single
@@ -519,7 +585,10 @@ function paintSeat(){
   card.classList.toggle("role-imposter", isImp);
   card.classList.remove("open","held");
   $("#front-badge").textContent = isImp ? t("imposter") : t("word");
-  $("#front-word").textContent = isImp ? "?" : S.word;
+  const wordEl = $("#front-word");
+  wordEl.textContent = isImp ? "?" : S.word;
+  wordEl.style.fontSize = "";              /* let the imposter rule win */
+  if(!isImp) fitWord(wordEl, S.word);
   $("#front-cat").textContent = (isImp && S.hintCat) || !isImp ? catLabel(S.catKey) : "";
   const seesClue = S.hintMode==="all" || (S.hintMode==="imposter" && isImp);
   $("#front-hint").textContent = seesClue ? S.clue : "";
@@ -528,28 +597,31 @@ function paintSeat(){
   $("#btn-next").disabled = true;
 }
 
-/* hold to reveal */
-(function bindHold(){
+/* tap to reveal, tap again to hide. the word is never on screen while the
+   phone is being handed over, because the button hides it before advancing */
+function hideCard(){ $("#card").classList.remove("open","held"); }
+
+(function bindTap(){
   const card = $("#card");
-  let open=false;
-  const openIt = e => {
-    if(e.cancelable) e.preventDefault();
-    if(open) return; open=true;
-    card.classList.add("open","held"); buzz(12);
-    $("#btn-next").disabled = false;
-  };
-  const closeIt = () => { if(!open) return; open=false; card.classList.remove("open","held"); };
-  card.addEventListener("touchstart", openIt, {passive:false});
-  card.addEventListener("touchend", closeIt);
-  card.addEventListener("touchcancel", closeIt);
-  card.addEventListener("mousedown", openIt);
-  window.addEventListener("mouseup", closeIt);
+  card.addEventListener("click", ()=>{
+    const opened = card.classList.toggle("open");
+    card.classList.toggle("held", opened);
+    if(opened){ buzz(12); $("#btn-next").disabled = false; }
+  });
   card.addEventListener("contextmenu", e=>e.preventDefault());
 })();
 
 $("#btn-next").onclick = ()=>{
+  hideCard();
   if(S.seat >= S.players){ startRound(); }
   else { S.seat++; paintSeat(); }
+};
+
+/* step back a seat, or out to settings from the first one */
+$("#btn-back").onclick = ()=>{
+  hideCard();
+  if(S.seat <= 1){ paintSetup(); show("s-setup"); }
+  else { S.seat--; paintSeat(); }
 };
 
 /* ============ round ============ */
@@ -590,6 +662,7 @@ $("#btn-pause").onclick = ()=>{
 $("#btn-reveal").onclick = ()=>{
   clearInterval(S.timer); S.running=false;
   $("#rev-word").textContent = S.word;
+  fitWord($("#rev-word"), S.word);
   $("#rev-hint").textContent = S.clue;
   const box = $("#rev-imps"); box.innerHTML="";
   const pill = (text, cls) => {
@@ -641,6 +714,7 @@ $$("#seg-hintmode button").forEach(b=>{
   take();
 })();
 
+load();
 paintSetup();
 })();
 </script>

@@ -1,6 +1,6 @@
 /* Imposter — offline service worker.
    Bump CACHE when you change any of the precached files. */
-const CACHE = "imposter-v1";
+const CACHE = "imposter-v2";
 
 /* relative URLs so this works at /imposter/ as well as at a domain root */
 const SHELL = [

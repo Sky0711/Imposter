@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#1A0F2E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Imposter">
+<title>Imposter</title>
+<meta name="description" content="Pass-and-play party game. Everyone gets the same secret word. Someone doesn't.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231A0F2E'/%3E%3Ccircle cx='32' cy='26' r='11' fill='%23E8334A'/%3E%3Cpath d='M12 58c0-11 9-19 20-19s20 8 20 19z' fill='%23F4ECE0'/%3E%3C/svg%3E">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=DM+Mono:wght@400;500&family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1A0F2E;
+  --velvet:#2C1A48;
+  --velvet-2:#3A2360;
+  --bone:#F4ECE0;
+  --brass:#E0A93B;
+  --jade:#35C08E;
+  --signal:#E8334A;
+  --signal-deep:#C4102A;
+  --blue:#16359B;
+  --slate:#A7A7AB;
+  --slate-2:#919197;
+  --dim:rgba(244,236,224,.55);
+  --display:'Anton','Haettenschweiler','Arial Narrow',Impact,sans-serif;
+  --body:'Sora',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --mono:'DM Mono',ui-monospace,'SF Mono',Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  background:var(--ink);
+  color:var(--bone);
+  font-family:var(--body);
+  overscroll-behavior:none;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(120% 70% at 50% -10%, rgba(58,35,96,.9), transparent 60%),
+    radial-gradient(80% 50% at 50% 110%, rgba(224,169,59,.10), transparent 70%);
+}
+#app{
+  position:relative;z-index:1;
+  min-height:100dvh;
+  display:flex;flex-direction:column;
+  padding:calc(env(safe-area-inset-top) + 18px) 20px calc(env(safe-area-inset-bottom) + 18px);
+  max-width:560px;margin:0 auto;
+}
+
+/* ---- shared bits ---- */
+.eyebrow{
+  font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--dim);
+}
+.screen{display:none;flex:1;flex-direction:column}
+.screen.on{display:flex}
+h1{font-family:var(--display);font-size:clamp(46px,15vw,76px);line-height:.86;letter-spacing:.01em;text-transform:uppercase}
+h1 .split{color:var(--signal)}
+.sub{margin-top:10px;color:var(--dim);font-size:14px;line-height:1.5;max-width:34ch}
+
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+.btn{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  width:100%;padding:19px 20px;border-radius:16px;
+  background:var(--bone);color:var(--ink);
+  font-weight:700;font-size:17px;letter-spacing:.01em;
+  transition:transform .12s ease, filter .12s ease;
+}
+.btn:active{transform:scale(.975)}
+.btn.ghost{background:transparent;color:var(--bone);border:1.5px solid rgba(244,236,224,.22);font-weight:600}
+.btn.brass{background:var(--brass);color:#2A1A05}
+.btn[disabled]{opacity:.35;pointer-events:none}
+.row{display:flex;gap:12px}
+.spacer{flex:1;min-height:16px}
+
+/* ---- setup ---- */
+.field{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  padding:15px 8px 15px 4px;
+  border-bottom:1px solid rgba(244,236,224,.10);
+}
+.field .label{font-size:15px;font-weight:600}
+.field .hint{font-size:12px;color:var(--dim);margin-top:3px}
+.stepper{display:flex;align-items:center;gap:4px;flex:none}
+.stepper button{
+  width:42px;height:42px;border-radius:12px;
+  background:var(--velvet);border:1px solid rgba(244,236,224,.10);
+  font-size:22px;line-height:1;font-weight:400;color:var(--bone);
+  display:flex;align-items:center;justify-content:center;
+}
+.stepper button:active{background:var(--velvet-2)}
+.stepper .val.rand{color:var(--brass)}
+.stepper .val{
+  font-family:var(--display);font-size:27px;min-width:52px;text-align:center;
+  line-height:1;padding-top:3px;
+}
+.switch{
+  width:56px;height:32px;border-radius:20px;background:var(--velvet);
+  border:1px solid rgba(244,236,224,.12);position:relative;flex:none;transition:background .18s ease;
+}
+.switch i{
+  position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;
+  background:var(--dim);transition:transform .18s cubic-bezier(.3,1.4,.5,1), background .18s ease;
+}
+.switch.on{background:var(--jade)}
+.switch.on i{transform:translateX(24px);background:#0B2E22}
+
+.chips{display:flex;flex-wrap:wrap;gap:9px;margin-top:14px}
+.chip{
+  padding:11px 15px;border-radius:12px;font-size:14px;font-weight:600;
+  background:var(--velvet);border:1.5px solid transparent;color:var(--dim);
+}
+.chip.on{background:transparent;border-color:var(--brass);color:var(--brass)}
+.seg{display:flex;gap:4px;background:var(--velvet);border-radius:12px;padding:4px;flex:none}
+.seg button{padding:9px 15px;border-radius:9px;font-size:13px;font-weight:700;color:var(--dim);font-family:var(--mono);letter-spacing:.06em}
+.seg button.on{background:var(--bone);color:var(--ink)}
+
+/* ---- the card ---- */
+.stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px}
+.card{
+  position:relative;width:100%;max-width:340px;aspect-ratio:3/4.1;
+  border-radius:26px;overflow:hidden;
+  background:linear-gradient(160deg,var(--velvet-2),var(--velvet));
+  border:1px solid rgba(244,236,224,.14);
+  box-shadow:0 26px 60px -24px rgba(0,0,0,.85);
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .18s ease, box-shadow .18s ease;
+}
+.card.held{transform:scale(1.02) rotate(-.4deg);box-shadow:0 34px 70px -22px rgba(0,0,0,.9)}
+.card .face{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center;padding:26px;gap:14px;
+}
+.card .back{
+  background:
+    repeating-linear-gradient(135deg, rgba(244,236,224,.045) 0 9px, transparent 9px 18px),
+    linear-gradient(160deg,var(--velvet-2),var(--velvet));
+  transition:opacity .16s ease;
+}
+.card.open .back{opacity:0}
+.card .front{opacity:0;transition:opacity .16s ease .04s}
+.card.open .front{opacity:1}
+.hint-line{
+  font-size:17px;font-style:italic;line-height:1.4;color:rgba(26,15,46,.72);
+  max-width:22ch;margin-top:2px;
+}
+.role-imposter .hint-line{color:var(--signal-deep)}
+.rev-hint{font-size:15px;font-style:italic;color:var(--dim);text-align:center;max-width:26ch;margin-top:-8px}
+.card .front{background:linear-gradient(165deg,var(--slate),var(--slate-2));color:var(--ink)}
+.seat-num{font-family:var(--display);font-size:110px;line-height:.82;color:var(--brass)}
+.seat-name{font-family:var(--display);font-size:32px;line-height:1;text-transform:uppercase;letter-spacing:.02em;word-break:break-word;max-width:100%}
+
+/* ---- name entry ---- */
+.names{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.namerow{display:flex;align-items:center;gap:12px}
+.namerow .n{
+  font-family:var(--display);font-size:26px;line-height:1;width:34px;text-align:center;
+  color:var(--brass);flex:none;padding-top:4px;
+}
+.namerow input{
+  flex:1;min-width:0;font:inherit;font-size:16px;font-weight:600;
+  background:var(--velvet);color:var(--bone);
+  border:1px solid rgba(244,236,224,.10);border-radius:12px;
+  padding:13px 14px;outline:none;
+  -webkit-user-select:text;user-select:text;
+}
+.namerow input::placeholder{color:rgba(244,236,224,.30);font-weight:400}
+.namerow input:focus{border-color:var(--brass)}
+.thumbhint{
+  width:64px;height:64px;border-radius:50%;border:2px dashed rgba(244,236,224,.3);
+  display:flex;align-items:center;justify-content:center;font-size:26px;
+  animation:pulse 2.2s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:.65}50%{transform:scale(1.08);opacity:1}}
+.word{font-family:var(--display);font-size:clamp(44px,13.5vw,68px);line-height:.92;text-transform:uppercase;color:var(--blue);word-break:break-word}
+.role-imposter .word{color:var(--signal-deep);font-size:clamp(94px,31vw,152px);line-height:.82}
+.cat-tag{
+  font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+  color:rgba(26,15,46,.58);
+}
+.front .badge{
+  font-family:var(--mono);font-weight:500;font-size:15px;letter-spacing:.2em;text-transform:uppercase;
+  padding:9px 16px;border-radius:99px;background:var(--blue);color:#E8E8EC;
+}
+.role-imposter .badge{background:var(--signal-deep);color:#F2E6E8}
+
+/* ---- play ---- */
+.clock{font-family:var(--display);font-size:clamp(76px,26vw,124px);line-height:.85;letter-spacing:.02em}
+.clock.low{color:var(--signal)}
+.kv{display:flex;flex-direction:column;align-items:center;gap:6px}
+.kv .v{font-family:var(--display);font-size:30px;text-transform:uppercase}
+.big-word{font-family:var(--display);font-size:clamp(44px,14vw,72px);line-height:.9;text-transform:uppercase;color:var(--brass);word-break:break-word;text-align:center}
+.imp-list{display:flex;flex-wrap:wrap;gap:9px;justify-content:center}
+.imp-pill{
+  font-family:var(--display);font-size:22px;padding:9px 17px 7px;border-radius:12px;
+  background:var(--signal);color:#fff;text-transform:uppercase;
+}
+.imp-pill.none{background:var(--jade);color:#08281D}
+.imp-pill.all{background:var(--signal);color:#fff;font-size:30px;padding:12px 26px 9px}
+.center{text-align:center}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- SETUP -->
+  <section class="screen on" id="s-setup">
+    <div class="eyebrow">pass-and-play · <span id="pcount-eyebrow">4</span> players</div>
+    <h1>Impo<span class="split">s</span>ter</h1>
+    <p class="sub" id="tagline">Everyone gets the same secret word. Someone doesn't. Talk your way through it and find out who.</p>
+
+    <div style="height:14px"></div>
+
+    <div class="field">
+      <div><div class="label" data-t="players">Players</div><div class="hint" data-t="players_h">Phone goes around the table</div></div>
+      <div class="stepper" data-step="players">
+        <button data-d="-1" aria-label="fewer">−</button><div class="val" id="v-players">4</div><button data-d="1" aria-label="more">+</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <div><div class="label" data-t="imposters">Imposters</div><div class="hint" data-t="imposters_h">Keep it under a third of the table</div></div>
+      <div class="stepper" data-step="imposters">
+        <button data-d="-1" aria-label="fewer">−</button><div class="val" id="v-imposters">1</div><button data-d="1" aria-label="more">+</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <div><div class="label" data-t="timer">Round timer</div><div class="hint" data-t="timer_h">Minutes of arguing. 0 turns it off.</div></div>
+      <div class="stepper" data-step="minutes">
+        <button data-d="-1" aria-label="less">−</button><div class="val" id="v-minutes">4</div><button data-d="1" aria-label="more">+</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <div><div class="label" data-t="hint">Imposter sees category</div><div class="hint" data-t="hint_h">Gives them a fighting chance</div></div>
+      <div class="switch on" id="sw-hint"><i></i></div>
+    </div>
+
+    <div class="field">
+      <div><div class="label" data-t="hintw">Word hint</div><div class="hint" data-t="hintw_h">One clue per word. Who sees it.</div></div>
+      <div class="seg" id="seg-hintmode">
+        <button data-hm="off">—</button><button data-hm="imposter" class="on">1</button><button data-hm="all">ALL</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <div><div class="label" data-t="lang">Language</div><div class="hint" data-t="lang_h">Word list</div></div>
+      <div class="seg" id="seg-lang">
+        <button data-lang="en">EN</button><button data-lang="hr" class="on">HR</button>
+      </div>
+    </div>
+
+    <div style="height:18px"></div>
+    <div class="eyebrow" data-t="names">Names</div>
+    <div class="names" id="names"></div>
+
+    <div style="height:18px"></div>
+    <div class="eyebrow" data-t="category">Category</div>
+    <div class="chips" id="chips"></div>
+
+    <div class="spacer"></div>
+    <button class="btn" id="btn-deal" data-t="deal">Deal the cards</button>
+  </section>
+
+  <!-- DEAL -->
+  <section class="screen" id="s-deal">
+    <div class="eyebrow"><span id="deal-progress">1 / 4</span></div>
+    <div class="stage">
+      <div class="card" id="card">
+        <div class="face back">
+          <div class="eyebrow" data-t="handto">Hand the phone to</div>
+          <div class="seat-num" id="seat-num">1</div>
+          <div class="seat-name" id="seat-name"></div>
+          <div class="thumbhint">👆</div>
+          <div class="eyebrow" data-t="holdto">Press and hold</div>
+        </div>
+        <div class="face front" id="front">
+          <div class="badge" id="front-badge">Word</div>
+          <div class="word" id="front-word">—</div>
+          <div class="cat-tag" id="front-cat"></div>
+          <div class="hint-line" id="front-hint"></div>
+        </div>
+      </div>
+      <div class="eyebrow center" id="deal-note" data-t="note_peek">Nobody else looks. Release to hide.</div>
+    </div>
+    <button class="btn" id="btn-next" disabled data-t="next">Pass it on</button>
+  </section>
+
+  <!-- PLAY -->
+  <section class="screen" id="s-play">
+    <div class="eyebrow" data-t="inplay">round in play</div>
+    <div class="stage">
+      <div class="kv">
+        <div class="eyebrow" data-t="firstup">First to describe</div>
+        <div class="v" id="first-speaker">Player 3</div>
+      </div>
+      <div class="clock" id="clock">4:00</div>
+      <div class="kv">
+        <div class="eyebrow" data-t="cat_public">Category</div>
+        <div class="v" id="play-cat">—</div>
+      </div>
+    </div>
+    <div class="row">
+      <button class="btn ghost" id="btn-pause" data-t="pause">Pause</button>
+      <button class="btn brass" id="btn-reveal" data-t="reveal">Reveal</button>
+    </div>
+  </section>
+
+  <!-- REVEAL -->
+  <section class="screen" id="s-reveal">
+    <div class="eyebrow" data-t="theword">the word was</div>
+    <div class="stage">
+      <div class="big-word" id="rev-word">—</div>
+      <div class="rev-hint" id="rev-hint"></div>
+      <div class="kv">
+        <div class="eyebrow" data-t="theimposter">the imposter</div>
+        <div class="imp-list" id="rev-imps"></div>
+      </div>
+    </div>
+    <div class="row">
+      <button class="btn ghost" id="btn-setup" data-t="settings">Settings</button>
+      <button class="btn" id="btn-again" data-t="again">Next round</button>
+    </div>
+  </section>
+
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============ words ============ */
+const CATS = [
+  {key:"food",   en:"Food & drink", hr:"Hrana i piće"},
+  {key:"places", en:"Places",       hr:"Mjesta"},
+  {key:"animals",en:"Animals",      hr:"Životinje"},
+  {key:"objects",en:"Objects",      hr:"Predmeti"},
+  {key:"jobs",   en:"Jobs",         hr:"Zanimanja"},
+  {key:"sports", en:"Sports",       hr:"Sport"}
+];
+
+const WORDS = {
+en:{
+food:["Pizza|comes in a box","Sushi|raw and cold","Pancakes|weekend breakfast","Garlic|it stays on your breath","Ice cream|melts fast","Coffee|morning ritual","Watermelon|mostly water","Cheese|it ages","Bacon|the smell wakes people","Olive oil|green and expensive","Honey|never goes bad","Popcorn|noisy in the dark","Soup|eaten with a spoon","Chocolate|melts in your hand","Beer|comes with foam on top","Oysters|swallowed whole","Rice|feeds half the world","Bread|goes stale","Mushrooms|grows in the dark","Ketchup|hard to get out of the bottle","Wine|better with age","Eggs|fragile","Sausage|nobody asks what is inside","Pasta|boiled water"],
+places:["Airport|everyone is waiting","Hospital|nobody comes for fun","Church|quiet and old","Beach|you leave with sand","Prison|you cannot walk out","Casino|no clocks on the wall","Library|keep your voice down","Gym|smells like effort","Submarine|no windows","Ski resort|cold and expensive","Cemetery|very quiet neighbours","Bank|cameras everywhere","Farm|early mornings","Nightclub|too loud to talk","Space station|nothing falls down","Dentist|that sound","Castle|thick walls","Subway|a crowd underground","Hotel lobby|nobody stays long","Campsite|you sleep on the ground","Aquarium|glass between you and it","Courthouse|somebody loses","Lighthouse|alone with a light","Car wash|five minutes of foam"],
+animals:["Elephant|never forgets","Octopus|too many arms","Penguin|dressed for dinner","Wolf|travels in a group","Bat|sleeps upside down","Crocodile|mostly teeth","Hedgehog|do not pick it up","Shark|keeps swimming","Owl|awake at night","Donkey|stubborn","Snail|carries its house","Bee|works too hard","Camel|goes without water","Goat|eats anything","Eagle|sees from far away","Frog|starts life as something else","Spider|builds a trap","Dolphin|smarter than it looks","Pigeon|city bird","Tiger|striped","Crab|walks sideways","Horse|measured in power","Mosquito|ruins the night","Sheep|follows the others"],
+objects:["Umbrella|useless on a clear day","Toothbrush|twice a day","Hammer|makes everything a nail","Mirror|honest","Candle|burns down slowly","Ladder|bad luck to walk under","Suitcase|it has wheels now","Keyboard|worn letters","Pillow|you fight over it","Scissors|two blades","Rope|you tie things with it","Helmet|hopefully never tested","Wallet|thinner every year","Telescope|far things look close","Fridge|hums all night","Chainsaw|loud and dangerous","Guitar|six strings","Lighter|borrowed, never returned","Broom|older than the vacuum","Wristwatch|nobody needs one anymore","Padlock|needs a key","Balloon|it does not last","Tent|folds into a bag","Vacuum|the dog hates it"],
+jobs:["Firefighter|runs toward it","Surgeon|steady hands","Plumber|arrives too late","Pilot|works above everyone","Teacher|says it again","Lawyer|charges by the hour","Farmer|watches the sky","Barber|holds a blade to your neck","Soldier|takes orders","Priest|keeps secrets","Journalist|asks the wrong question","Chef|shouts in the heat","Lifeguard|watches and waits","Mechanic|it is worse than you think","Dentist|nobody looks forward to it","Fisherman|patient and wet","Taxi driver|has opinions","Referee|everybody hates them","Beekeeper|dressed in white","Miner|works in the dark","Nurse|does the real work","Electrician|do not touch that","Tattoo artist|permanent","Undertaker|the last one to see you"],
+sports:["Football|the whole world watches","Basketball|tall people","Boxing|gloves","Chess|nobody sweats","Swimming|you cannot hear anything","Skiing|downhill","Tennis|scored strangely","Marathon|it takes hours","Water polo|drowning with rules","Darts|a pub sport","Archery|hold your breath","Surfing|you wait more than you go","Golf|small ball, big field","Wrestling|no ball","Cycling|shaved legs","Bowling|rented shoes","Handball|big in Europe","Gymnastics|very young athletes","Fencing|masks","Skateboarding|bruised shins","Rowing|you go backwards","Climbing|chalk on the hands","Table tennis|fast and small","Hockey|missing teeth"]
+},
+hr:{
+food:["Pizza|dolazi u kutiji","Sushi|sirovo i hladno","Palačinke|vikend doručak","Češnjak|ostaje u dahu","Sladoled|brzo se topi","Kava|jutarnji ritual","Lubenica|uglavnom voda","Sir|stari s vremenom","Slanina|miris budi ljude","Maslinovo ulje|zeleno i skupo","Med|nikad se ne pokvari","Kokice|bučno u mraku","Juha|jede se žlicom","Čokolada|topi se u ruci","Pivo|dolazi s pjenom","Kamenice|guta se cijelo","Riža|hrani pola svijeta","Kruh|osuši se","Gljive|raste u mraku","Kečap|teško izlazi iz boce","Vino|bolje s godinama","Jaja|lomljivo","Kobasica|nitko ne pita što je unutra","Tjestenina|kuhana voda"],
+places:["Aerodrom|svi čekaju","Bolnica|nitko ne dolazi iz zabave","Crkva|tiho i staro","Plaža|odeš s pijeskom","Zatvor|ne možeš izaći","Kockarnica|nema satova na zidu","Knjižnica|tiše malo","Teretana|miriše na trud","Podmornica|nema prozora","Skijalište|hladno i skupo","Groblje|jako tihi susjedi","Banka|kamere posvuda","Farma|rano jutro","Noćni klub|preglasno za razgovor","Svemirska stanica|ništa ne pada","Zubar|onaj zvuk","Dvorac|debeli zidovi","Podzemna|gužva pod zemljom","Hotelski lobi|nitko se ne zadržava","Kamp|spavaš na zemlji","Akvarij|staklo između vas","Sud|netko gubi","Svjetionik|sam sa svjetlom","Autopraonica|pet minuta pjene"],
+animals:["Slon|nikad ne zaboravlja","Hobotnica|previše ruku","Pingvin|obučen za večeru","Vuk|ide u čoporu","Šišmiš|spava naopako","Krokodil|uglavnom zubi","Jež|nemoj ga dizati","Morski pas|stalno pliva","Sova|budna noću","Magarac|tvrdoglav","Puž|nosi kuću sa sobom","Pčela|previše radi","Deva|izdrži bez vode","Koza|jede sve","Orao|vidi izdaleka","Žaba|počne kao nešto drugo","Pauk|plete zamku","Dupin|pametniji nego što izgleda","Golub|gradska ptica","Tigar|prugast","Rak|hoda postrance","Konj|mjeri se u snazi","Komarac|uništi noć","Ovca|ide za drugima"],
+objects:["Kišobran|beskoristan po suncu","Četkica za zube|dvaput dnevno","Čekić|sve postane čavao","Ogledalo|iskreno","Svijeća|polako izgori","Ljestve|peh je proći ispod","Kofer|sad ima kotače","Tipkovnica|izlizana slova","Jastuk|otima se","Škare|dvije oštrice","Uže|njime se veže","Kaciga|nadaš se da neće trebati","Novčanik|sve tanji","Teleskop|daleko izgleda blizu","Hladnjak|zuji cijelu noć","Motorna pila|glasno i opasno","Gitara|šest žica","Upaljač|posudi se, ne vrati","Metla|starija od usisavača","Ručni sat|više nikome ne treba","Lokot|treba ključ","Balon|ne traje dugo","Šator|stane u torbu","Usisavač|pas ga mrzi"],
+jobs:["Vatrogasac|trči prema tome","Kirurg|mirna ruka","Vodoinstalater|dođe prekasno","Pilot|radi iznad svih","Učitelj|ponavlja isto","Odvjetnik|naplaćuje po satu","Poljoprivrednik|gleda u nebo","Frizer|drži oštricu uz vrat","Vojnik|sluša naredbe","Svećenik|čuva tajne","Novinar|pita krivo pitanje","Kuhar|viče na vrućini","Spasilac|gleda i čeka","Mehaničar|gore je nego što misliš","Zubar|nitko se ne veseli","Ribar|strpljiv i mokar","Taksist|ima mišljenje o svemu","Sudac|svi ga mrze","Pčelar|obučen u bijelo","Rudar|radi u mraku","Medicinska sestra|odradi pravi posao","Električar|ne diraj to","Tattoo majstor|zauvijek","Pogrebnik|zadnji te vidi"],
+sports:["Nogomet|cijeli svijet gleda","Košarka|visoki ljudi","Boks|rukavice","Šah|bez znojenja","Plivanje|ništa se ne čuje","Skijanje|nizbrdo","Tenis|čudno se broji","Maraton|traje satima","Vaterpolo|utapanje s pravilima","Pikado|sport iz birtije","Streličarstvo|zadrži dah","Surfanje|više se čeka nego vozi","Golf|mala lopta, veliko polje","Hrvanje|bez lopte","Biciklizam|obrijane noge","Kuglanje|posuđene cipele","Rukomet|velik u Europi","Gimnastika|jako mladi sportaši","Mačevanje|maske","Skateboarding|razbijene cjevanice","Veslanje|ide se unatrag","Penjanje|magnezij na rukama","Stolni tenis|brzo i malo","Hokej|falični zubi"]
+}};
+
+/* ============ ui strings ============ */
+const T = {
+en:{players:"Players",players_h:"Phone goes around the table",imposters:"Imposters",imposters_h:"Keep it under a third of the table",
+timer:"Round timer",timer_h:"Minutes of arguing. 0 turns it off.",hint:"Imposter sees category",hint_h:"Gives them a fighting chance",
+lang:"Language",lang_h:"Word list",category:"Category",deal:"Deal the cards",handto:"Hand the phone to",holdto:"Press and hold",
+note_peek:"Nobody else looks. Release to hide.",next:"Pass it on",inplay:"round in play",firstup:"First to describe",
+cat_public:"Category",pause:"Pause",resume:"Resume",reveal:"Reveal",theword:"the word was",theimposter:"the imposter",
+settings:"Settings",again:"Next round",mix:"Mix",player:"Player",word:"Word",imposter:"Imposter",
+tagline:"Everyone gets the same secret word. Someone doesn't. Talk your way through it and find out who.",
+start:"Start the round",noone:"Nobody",time:"Time",names:"Names",nameph:"Name (optional)",
+hintw:"Word hint",hintw_h:"One clue per word. Choose who sees it.",hintoff:"Off",hintimp:"Imposter",hintall:"Everyone",
+imposters_r:"Rolled in secret. Could be nobody, could be all of you.",everyone:"Everyone"},
+hr:{players:"Igrači",players_h:"Mobitel ide u krug",imposters:"Uljezi",imposters_h:"Manje od trećine stola",
+timer:"Vrijeme runde",timer_h:"Minute rasprave. 0 gasi timer.",hint:"Uljez vidi kategoriju",hint_h:"Da ima kakve šanse",
+lang:"Jezik",lang_h:"Popis riječi",category:"Kategorija",deal:"Podijeli karte",handto:"Daj mobitel",holdto:"Pritisni i drži",
+note_peek:"Nitko drugi ne gleda. Pusti da sakriješ.",next:"Predaj dalje",inplay:"runda u tijeku",firstup:"Prvi opisuje",
+cat_public:"Kategorija",pause:"Pauza",resume:"Nastavi",reveal:"Otkrij",theword:"riječ je bila",theimposter:"uljez",
+settings:"Postavke",again:"Sljedeća runda",mix:"Miks",player:"Igrač",word:"Riječ",imposter:"Uljez",
+tagline:"Svi dobiju istu tajnu riječ. Netko ne dobije. Pričajte i otkrijte tko.",
+start:"Kreni",noone:"Nitko",time:"Vrijeme",names:"Imena",nameph:"Ime (nije obavezno)",
+hintw:"Natuknica",hintw_h:"Jedna natuknica po riječi. Tko je vidi.",hintoff:"Ne",hintimp:"Uljez",hintall:"Svi",
+imposters_r:"Izvlači se u tajnosti. Može nitko, može svi.",everyone:"Svi"}
+};
+
+/* ============ state ============ */
+const S = {players:4, imposters:1, minutes:4, hintCat:true, hintMode:"imposter", lang:"hr", cat:"mix", names:[],
+           word:"", clue:"", catKey:"", impSet:new Set(), seat:1, first:1, left:0, timer:null, running:false};
+
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const t = k => T[S.lang][k] || k;
+const buzz = ms => { if(navigator.vibrate) try{navigator.vibrate(ms);}catch(e){} };
+
+function show(id){ $$(".screen").forEach(el=>el.classList.toggle("on", el.id===id)); }
+
+function clamp(){
+  S.players = Math.max(3, Math.min(16, S.players));
+  S.minutes = Math.max(0, Math.min(15, S.minutes));
+  const maxImp = Math.max(1, Math.floor((S.players-1)/2));
+  if(S.imposters < 0) S.imposters = -1;
+  else S.imposters = Math.max(1, Math.min(maxImp, S.imposters));
+}
+
+function paintText(){
+  $$("[data-t]").forEach(el=>{ el.textContent = t(el.dataset.t); });
+  $("#tagline").textContent = t("tagline");
+  $("#btn-pause").textContent = S.running ? t("pause") : t("resume");
+}
+
+function paintSetup(){
+  clamp();
+  $("#v-players").textContent = S.players;
+  const rnd = S.imposters === -1;
+  $("#v-imposters").textContent = rnd ? "?" : S.imposters;
+  $("#v-imposters").classList.toggle("rand", rnd);
+  $("#v-minutes").textContent = S.minutes;
+  $("#pcount-eyebrow").textContent = S.players;
+  $("#sw-hint").classList.toggle("on", S.hintCat);
+  $$("#seg-lang button").forEach(b=>b.classList.toggle("on", b.dataset.lang===S.lang));
+  $$("#seg-hintmode button").forEach(b=>{
+    b.classList.toggle("on", b.dataset.hm===S.hintMode);
+    b.textContent = t({off:"hintoff",imposter:"hintimp",all:"hintall"}[b.dataset.hm]);
+  });
+  paintNames();
+  paintChips();
+  paintText();
+  $("[data-t='imposters_h']").textContent = rnd ? t("imposters_r") : t("imposters_h");
+}
+
+/* label for a seat: "3" alone, or "3 · Marko" */
+function nameOf(n){ return (S.names[n-1]||"").trim(); }
+function seatLabel(n){ const nm = nameOf(n); return nm ? n+" · "+nm : String(n); }
+
+function paintNames(){
+  const box = $("#names");
+  while(box.children.length > S.players) box.removeChild(box.lastChild);
+  while(box.children.length < S.players){
+    const i = box.children.length + 1;
+    const row = document.createElement("div"); row.className = "namerow";
+    const num = document.createElement("div"); num.className = "n"; num.textContent = i;
+    const inp = document.createElement("input");
+    inp.type = "text"; inp.maxLength = 14; inp.autocomplete = "off";
+    inp.setAttribute("autocapitalize","words");
+    inp.setAttribute("enterkeyhint","next");
+    inp.value = S.names[i-1] || "";
+    inp.oninput = () => { S.names[i-1] = inp.value; };
+    row.appendChild(num); row.appendChild(inp);
+    box.appendChild(row);
+  }
+  Array.from(box.querySelectorAll("input")).forEach(inp=>{ inp.placeholder = t("nameph"); });
+}
+
+function paintChips(){
+  const box = $("#chips"); box.innerHTML = "";
+  const mk = (key,label)=>{
+    const b=document.createElement("button");
+    b.className="chip"+(S.cat===key?" on":"");
+    b.textContent=label; b.onclick=()=>{S.cat=key;paintChips();};
+    box.appendChild(b);
+  };
+  mk("mix", t("mix"));
+  CATS.forEach(c=>mk(c.key, c[S.lang]));
+}
+
+function catLabel(key){ const c = CATS.find(x=>x.key===key); return c ? c[S.lang] : ""; }
+
+/* ============ dealing ============ */
+/* U-shaped draw over 0..n: the two extremes are the likeliest single
+   outcomes after "one imposter", the muddy middle counts are rarest. */
+const EXTREME_BIAS = 2.2; /* raise to favour 0-or-all harder, lower to flatten */
+function rollImposterCount(n){
+  const w = [];
+  let sum = 0;
+  for(let k=0;k<=n;k++){
+    const x = (k===0 || k===n) ? EXTREME_BIAS : 4/(k+1);
+    w.push(x); sum += x;
+  }
+  let r = Math.random()*sum;
+  for(let k=0;k<=n;k++){ r -= w[k]; if(r<=0) return k; }
+  return n;
+}
+
+function deal(){
+  clamp();
+  S.catKey = S.cat==="mix" ? CATS[Math.floor(Math.random()*CATS.length)].key : S.cat;
+  const pool = WORDS[S.lang][S.catKey];
+  const pick = pool[Math.floor(Math.random()*pool.length)].split("|");
+  S.word = pick[0]; S.clue = pick[1] || "";
+
+  const count = S.imposters === -1 ? rollImposterCount(S.players) : S.imposters;
+  const seats = [];
+  for(let i=1;i<=S.players;i++) seats.push(i);
+  for(let i=seats.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [seats[i],seats[j]]=[seats[j],seats[i]]; }
+  S.impSet = new Set(seats.slice(0, count));
+  S.first = 1+Math.floor(Math.random()*S.players);
+
+  S.seat = 1;
+  paintSeat();
+  show("s-deal");
+}
+
+function paintSeat(){
+  $("#seat-num").textContent = S.seat;
+  $("#seat-name").textContent = nameOf(S.seat);
+  $("#deal-progress").textContent = S.seat+" / "+S.players;
+  const isImp = S.impSet.has(S.seat);
+  const card = $("#card");
+  card.classList.toggle("role-imposter", isImp);
+  card.classList.remove("open","held");
+  $("#front-badge").textContent = isImp ? t("imposter") : t("word");
+  $("#front-word").textContent = isImp ? "?" : S.word;
+  $("#front-cat").textContent = (isImp && S.hintCat) || !isImp ? catLabel(S.catKey) : "";
+  const seesClue = S.hintMode==="all" || (S.hintMode==="imposter" && isImp);
+  $("#front-hint").textContent = seesClue ? S.clue : "";
+  const last = S.seat >= S.players;
+  $("#btn-next").textContent = last ? t("start") : t("next");
+  $("#btn-next").disabled = true;
+}
+
+/* hold to reveal */
+(function bindHold(){
+  const card = $("#card");
+  let open=false;
+  const openIt = e => {
+    if(e.cancelable) e.preventDefault();
+    if(open) return; open=true;
+    card.classList.add("open","held"); buzz(12);
+    $("#btn-next").disabled = false;
+  };
+  const closeIt = () => { if(!open) return; open=false; card.classList.remove("open","held"); };
+  card.addEventListener("touchstart", openIt, {passive:false});
+  card.addEventListener("touchend", closeIt);
+  card.addEventListener("touchcancel", closeIt);
+  card.addEventListener("mousedown", openIt);
+  window.addEventListener("mouseup", closeIt);
+  card.addEventListener("contextmenu", e=>e.preventDefault());
+})();
+
+$("#btn-next").onclick = ()=>{
+  if(S.seat >= S.players){ startRound(); }
+  else { S.seat++; paintSeat(); }
+};
+
+/* ============ round ============ */
+function startRound(){
+  $("#first-speaker").textContent = seatLabel(S.first);
+  $("#play-cat").textContent = catLabel(S.catKey);
+  S.left = S.minutes*60;
+  S.running = S.minutes > 0;
+  paintClock();
+  clearInterval(S.timer);
+  if(S.running){
+    S.timer = setInterval(()=>{
+      if(!S.running) return;
+      S.left--;
+      if(S.left<=0){ S.left=0; S.running=false; clearInterval(S.timer); buzz([90,70,90,70,180]); }
+      paintClock();
+    },1000);
+  }
+  $("#btn-pause").style.display = S.minutes>0 ? "" : "none";
+  $("#btn-pause").textContent = t("pause");
+  show("s-play");
+}
+
+function paintClock(){
+  const c = $("#clock");
+  if(S.minutes===0){ c.textContent = "∞"; c.classList.remove("low"); return; }
+  const m = Math.floor(S.left/60), s = S.left%60;
+  c.textContent = m+":"+String(s).padStart(2,"0");
+  c.classList.toggle("low", S.left<=30);
+}
+
+$("#btn-pause").onclick = ()=>{
+  if(S.left<=0) return;
+  S.running = !S.running;
+  $("#btn-pause").textContent = S.running ? t("pause") : t("resume");
+};
+
+$("#btn-reveal").onclick = ()=>{
+  clearInterval(S.timer); S.running=false;
+  $("#rev-word").textContent = S.word;
+  $("#rev-hint").textContent = S.clue;
+  const box = $("#rev-imps"); box.innerHTML="";
+  const pill = (text, cls) => {
+    const d=document.createElement("div"); d.className="imp-pill"+(cls?" "+cls:"");
+    d.textContent = text; box.appendChild(d);
+  };
+  if(S.impSet.size === 0) pill(t("noone"), "none");
+  else if(S.impSet.size === S.players) pill(t("everyone"), "all");
+  else Array.from(S.impSet).sort((a,b)=>a-b).forEach(n=>pill(seatLabel(n)));
+  paintText();
+  show("s-reveal");
+};
+
+$("#btn-again").onclick = deal;
+$("#btn-setup").onclick = ()=>{ paintSetup(); show("s-setup"); };
+$("#btn-deal").onclick = deal;
+
+/* ============ setup controls ============ */
+$$(".stepper").forEach(st=>{
+  st.querySelectorAll("button").forEach(b=>{
+    b.onclick = ()=>{
+      const key = st.dataset.step, d = parseInt(b.dataset.d,10);
+      if(key==="imposters"){
+        if(d<0 && S.imposters===1) S.imposters = -1;
+        else if(d>0 && S.imposters===-1) S.imposters = 1;
+        else S.imposters += d;
+      } else { S[key] += d; }
+      buzz(8); paintSetup();
+    };
+  });
+});
+$("#sw-hint").onclick = ()=>{ S.hintCat = !S.hintCat; paintSetup(); };
+$$("#seg-lang button").forEach(b=>{
+  b.onclick = ()=>{ S.lang = b.dataset.lang; paintSetup(); };
+});
+$$("#seg-hintmode button").forEach(b=>{
+  b.onclick = ()=>{ S.hintMode = b.dataset.hm; paintSetup(); };
+});
+
+/* keep the screen from sleeping mid-round where supported.
+   the lock is dropped whenever the page is hidden, so re-take it on return */
+(function keepAwake(){
+  let lock = null;
+  const take = async () => {
+    try{ if("wakeLock" in navigator && !lock){ lock = await navigator.wakeLock.request("screen"); lock.addEventListener("release",()=>{lock=null;}); } }catch(e){}
+  };
+  document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) take(); });
+  document.addEventListener("click", take, {once:true});
+  take();
+})();
+
+paintSetup();
+})();
+</script>
+<script>
+/* offline support: register the service worker, relative so it works
+   from a project-page subpath like /imposter/ as well as a custom domain */
+if("serviceWorker" in navigator){
+  window.addEventListener("load", ()=>{
+    navigator.serviceWorker.register("sw.js").catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>

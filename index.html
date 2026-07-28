@@ -172,11 +172,12 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   background:
     repeating-linear-gradient(135deg, rgba(244,236,224,.045) 0 9px, transparent 9px 18px),
     linear-gradient(160deg,var(--velvet-2),var(--velvet));
-  transition:opacity .16s ease;
+  transition:transform .22s cubic-bezier(.2,.8,.3,1);
 }
-.card.open .back{opacity:0}
-.card .front{opacity:0;transition:opacity .16s ease .04s}
-.card.open .front{opacity:1}
+/* the cover sits on top and slides with your finger; the face is always
+   underneath, so how much you uncover is exactly how far you dragged */
+.card .back{z-index:2;will-change:transform}
+.card .front{z-index:1}
 .hint-line{
   font-size:17.5px;line-height:1.45;color:var(--dim-2);
   max-width:24ch;margin-top:2px;
@@ -385,7 +386,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "1.6";
+const APP_VERSION = "1.7";
 
 /* ============ words ============ */
 const CATS = [
@@ -425,7 +426,7 @@ countries:["Italija|ima oblik čizme","Francuska|toranj i bageta","Španjolska|f
 const T = {
 en:{players:"Players",players_h:"Around the table",imposters:"Imposters",imposters_h:"Under a third of the table",
 timer:"Round timer",timer_h:"Minutes. 0 = no timer",hint:"Imposter sees category",hint_h:"A fighting chance",
-lang:"Language",lang_h:"Word list",category:"Category",deal:"Start the game",handto:"Hand the phone to",tapto:"↕ Swipe to see your word",
+lang:"Language",lang_h:"Word list",category:"Category",deal:"Start the game",handto:"Hand the phone to",tapto:"↕ Drag to peek",
 note_peek:"Nobody else looks.",next:"Next player",inplay:"round in play",firstup:"First to describe",
 cat_public:"Category",pause:"Pause",resume:"Resume",reveal:"Reveal",theword:"the word was",theimposter:"the imposter",
 settings:"Settings",again:"Next round",mix:"All",player:"Player",word:"Player",imposter:"You are the imposter",
@@ -436,7 +437,7 @@ hintw:"Imposter sees clue",hintw_h:"One clue, only for them",everyone:"Everyone"
 tableline:"pass-and-play · {n} players"},
 hr:{players:"Igrači",players_h:"Ide u krug",imposters:"Uljezi",imposters_h:"Manje od trećine stola",
 timer:"Vrijeme runde",timer_h:"Minute. 0 = bez timera",hint:"Uljez vidi kategoriju",hint_h:"Da ima kakve šanse",
-lang:"Jezik",lang_h:"Popis riječi",category:"Kategorija",deal:"Pokreni igru",handto:"Daj mobitel",tapto:"↕ Povuci gore ili dolje",
+lang:"Jezik",lang_h:"Popis riječi",category:"Kategorija",deal:"Pokreni igru",handto:"Daj mobitel",tapto:"↕ Povuci da proviriš",
 note_peek:"Nitko drugi ne gleda.",next:"Sljedeći igrač",inplay:"runda u tijeku",firstup:"Prvi opisuje",
 cat_public:"Kategorija",pause:"Pauza",resume:"Nastavi",reveal:"Otkrij",theword:"riječ je bila",theimposter:"uljez",
 settings:"Postavke",again:"Nova runda",mix:"Sve",player:"Igrač",word:"Igrač",imposter:"Ti si uljez",
@@ -624,7 +625,7 @@ function paintSeat(){
   const isImp = S.impSet.has(S.seat);
   const card = $("#card");
   card.classList.toggle("role-imposter", isImp);
-  card.classList.remove("open","held");
+  Peek.reset();
   $("#front-badge").textContent = isImp ? t("imposter") : t("word");
   const wordEl = $("#front-word");
   wordEl.textContent = isImp ? "?" : S.word;
@@ -641,27 +642,62 @@ function paintSeat(){
 /* swipe up on the card to reveal, down to hide again. a deliberate gesture,
    so a stray tap while the phone is being passed cannot expose the word.
    the button hides it before advancing, so it is never up during a hand-off */
-function hideCard(){ $("#card").classList.remove("open","held"); }
+/* The cover follows your finger. Drag it as far as you like and let go -
+   it settles open or shut. Nothing is ever revealed that you did not drag
+   open yourself, and you can peek as many times as you want. */
+const Peek = (function(){
+  const card = $("#card");
+  const cover = card.querySelector(".back");
+  let startY = null, base = 0, offset = 0, height = 0, seen = false;
 
-(function bindSwipe(){
-  const card = $("#card"), THRESHOLD = 40;
-  let y0 = null;
-  const openIt = ()=>{
-    if(card.classList.contains("open")) return;
-    card.classList.add("open","held"); buzz(12);
-    $("#btn-next").disabled = false;
+  const put = px => {
+    offset = px;
+    cover.style.transform = "translateY(" + px + "px)";
+    card.classList.toggle("open", px < -2);
   };
-  card.addEventListener("pointerdown", e=>{ y0 = e.clientY; });
-  card.addEventListener("pointerup", e=>{
-    if(y0 === null) return;
-    const dy = Math.abs(y0 - e.clientY); y0 = null;
-    /* either direction - it is one card you uncover and cover again */
-    if(dy < THRESHOLD) return;
-    if(card.classList.contains("open")) hideCard(); else openIt();
+  const settle = px => {
+    cover.style.transition = "";              /* back to the CSS easing */
+    put(px);
+  };
+
+  function reset(){
+    cover.style.transition = "none";
+    put(0);
+    seen = false;
+    requestAnimationFrame(()=>{ cover.style.transition = ""; });
+  }
+  function close(){ settle(0); }
+
+  card.addEventListener("pointerdown", e => {
+    height = card.getBoundingClientRect().height;
+    startY = e.clientY;
+    base = offset;
+    cover.style.transition = "none";          /* 1:1 with the finger */
+    try{ card.setPointerCapture(e.pointerId); }catch(err){}
   });
-  card.addEventListener("pointercancel", ()=>{ y0 = null; });
-  card.addEventListener("contextmenu", e=>e.preventDefault());
+
+  card.addEventListener("pointermove", e => {
+    if(startY === null) return;
+    put(Math.max(-height, Math.min(0, base + (e.clientY - startY))));
+    if(offset < -height * 0.3 && !seen){      /* far enough to have read it */
+      seen = true; buzz(10);
+      $("#btn-next").disabled = false;
+    }
+  });
+
+  const release = () => {
+    if(startY === null) return;
+    startY = null;
+    settle(offset < -height * 0.4 ? -height : 0);
+  };
+  card.addEventListener("pointerup", release);
+  card.addEventListener("pointercancel", release);
+  card.addEventListener("contextmenu", e => e.preventDefault());
+
+  return { reset, close };
 })();
+
+function hideCard(){ Peek.close(); }
 
 $("#btn-next").onclick = ()=>{
   hideCard();

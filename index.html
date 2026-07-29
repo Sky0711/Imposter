@@ -28,8 +28,7 @@
   --signal-deep:#C4102A;
   --blue:#16359B;
   --player:#7AB0FF;   /* bright blue, 6.9:1 on the word card */
-  --card:#241340;      /* word card - bone on this is 14.4:1 */
-  --card-imp:#8E0A1E;  /* imposter card - bone on this is 8.1:1 */
+  --card:#241340;      /* every card - bone on this is 14.4:1 */
   --dim:rgba(244,236,224,.72);
   --dim-2:rgba(244,236,224,.82);
   /* one family throughout; weight carries the hierarchy, not a second face */
@@ -172,7 +171,8 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   background:
     repeating-linear-gradient(135deg, rgba(244,236,224,.045) 0 9px, transparent 9px 18px),
     linear-gradient(160deg,var(--velvet-2),var(--velvet));
-  transition:transform .22s cubic-bezier(.2,.8,.3,1);
+  /* accelerating, because it is falling shut rather than gliding */
+  transition:transform .2s cubic-bezier(.4,0,.9,1);
 }
 /* the cover sits on top and slides with your finger; the face is always
    underneath, so how much you uncover is exactly how far you dragged */
@@ -183,11 +183,11 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   max-width:24ch;margin-top:2px;
 }
 .rev-hint{font-size:16px;color:var(--dim-2);text-align:center;max-width:28ch;margin-top:-8px}
-/* the whole card carries the role, not just the text colour - readable
-   across the table, and the badge still says it in words for anyone
-   who cannot rely on the colour */
+/* Every card looks the same from a step away. A red imposter card was
+   readable across the table - the one person who must not be spotted was
+   the one holding the only red rectangle in the room. The role is in the
+   words on the card, which you have to be holding it to read. */
 .card .front{background:linear-gradient(165deg,#2E1852,var(--card));color:var(--bone)}
-.card.role-imposter .front{background:linear-gradient(165deg,#A50D22,var(--card-imp))}
 .seat-num{font-family:var(--display);font-weight:800;font-size:88px;line-height:.9;color:var(--brass);letter-spacing:-.03em}
 .seat-name{font-family:var(--display);font-weight:700;font-size:27px;line-height:1.15;letter-spacing:-.01em;word-break:break-word;max-width:100%}
 
@@ -209,8 +209,8 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .namerow input:focus{border-color:var(--brass)}
 .backmid{display:flex;flex-direction:column;align-items:center;gap:12px}
 /* The handle sits at the foot of the cover: under your thumb when the card
-   is shut, and it is exactly the strip left showing when the card is open,
-   so there is always something to grab and pull back down. */
+   is shut, and it rides up with the cover so your thumb keeps holding the
+   same strip all the way open. */
 .pull{
   position:absolute;left:0;right:0;bottom:0;
   display:flex;flex-direction:column;align-items:center;gap:1px;
@@ -224,17 +224,15 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 @keyframes pulse{0%,100%{transform:scale(1);opacity:.78}50%{transform:scale(1.04);opacity:1}}
 /* sentence case, not caps - word shape is a real reading cue */
 .word{font-family:var(--display);font-weight:800;font-size:clamp(36px,10.5vw,56px);line-height:1.02;letter-spacing:-.02em;color:var(--bone);overflow-wrap:break-word;hyphens:none}
-.role-imposter .word{font-size:clamp(92px,30vw,140px);line-height:.9}
 .cat-tag{
   font-family:var(--body);font-size:14px;font-weight:600;letter-spacing:.04em;
-  color:var(--dim-2);   /* 72% fell to 4.0:1 on the red card, 82% clears it */
+  color:var(--dim-2);
 }
 .front .badge{
   font-family:var(--body);font-weight:800;font-size:16px;letter-spacing:.1em;text-transform:uppercase;
   padding:10px 18px;border-radius:99px;
   background:rgba(122,176,255,.15);border:1.5px solid var(--player);color:var(--player);
 }
-.role-imposter .badge{background:rgba(244,236,224,.16);border-color:transparent;color:var(--bone)}
 
 /* ---- play ---- */
 .clock{font-family:var(--display);font-weight:800;font-size:clamp(64px,21vw,104px);line-height:.95;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
@@ -336,7 +334,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
             <div class="seat-num" id="seat-num">1</div>
             <div class="seat-name" id="seat-name"></div>
           </div>
-          <div class="pull" id="pull"><b>↕</b><span data-t="tapto">Drag to peek</span></div>
+          <div class="pull" id="pull"><b>↑</b><span data-t="tapto">Hold to peek</span></div>
         </div>
         <div class="face front" id="front">
           <div class="badge" id="front-badge">Word</div>
@@ -395,7 +393,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "1.9";
+const APP_VERSION = "2.0";
 
 /* ============ words ============ */
 const CATS = [
@@ -435,7 +433,7 @@ countries:["Italija|ima oblik čizme","Francuska|toranj","Španjolska|flamenko",
 const T = {
 en:{players:"Players",players_h:"Around the table",imposters:"Imposters",imposters_h:"Under a third of the table",
 timer:"Round timer",timer_h:"Minutes. 0 = no timer",hint:"Show category",hint_h:"To everyone, or to nobody",
-lang:"Language",lang_h:"Word list",category:"Category",deal:"Start the game",handto:"Hand the phone to",tapto:"↕ Drag to peek",
+lang:"Language",lang_h:"Word list",category:"Category",deal:"Start the game",handto:"Hand the phone to",tapto:"Hold to peek",
 note_peek:"Nobody else looks.",next:"Next player",inplay:"round in play",firstup:"First to describe",
 cat_public:"Category",pause:"Pause",resume:"Resume",reveal:"Reveal",theword:"the word was",theimposter:"the imposter",
 settings:"Settings",again:"Next round",mix:"All",player:"Player",word:"Player",imposter:"You are the imposter",
@@ -446,7 +444,7 @@ hintw:"Imposter sees clue",hintw_h:"One clue, only for them",everyone:"Everyone"
 tableline:"pass-and-play · {n} players"},
 hr:{players:"Igrači",players_h:"Ide u krug",imposters:"Uljezi",imposters_h:"Manje od trećine stola",
 timer:"Vrijeme runde",timer_h:"Minute. 0 = bez timera",hint:"Prikaži kategoriju",hint_h:"Svima ili nikome",
-lang:"Jezik",lang_h:"Popis riječi",category:"Kategorija",deal:"Pokreni igru",handto:"Daj mobitel",tapto:"↕ Povuci da proviriš",
+lang:"Jezik",lang_h:"Popis riječi",category:"Kategorija",deal:"Pokreni igru",handto:"Daj mobitel",tapto:"Drži da vidiš",
 note_peek:"Nitko drugi ne gleda.",next:"Sljedeći igrač",inplay:"runda u tijeku",firstup:"Prvi opisuje",
 cat_public:"Kategorija",pause:"Pauza",resume:"Nastavi",reveal:"Otkrij",theword:"riječ je bila",theimposter:"uljez",
 settings:"Postavke",again:"Nova runda",mix:"Sve",player:"Igrač",word:"Igrač",imposter:"Ti si uljez",
@@ -632,14 +630,12 @@ function paintSeat(){
   $("#seat-name").textContent = nameOf(S.seat);
   $("#deal-progress").textContent = S.seat+" / "+S.players;
   const isImp = S.impSet.has(S.seat);
-  const card = $("#card");
-  card.classList.toggle("role-imposter", isImp);
   Peek.reset();
   $("#front-badge").textContent = isImp ? t("imposter") : t("word");
   const wordEl = $("#front-word");
-  wordEl.textContent = isImp ? "?" : S.word;
-  wordEl.style.fontSize = "";              /* let the imposter rule win */
-  if(!isImp) fitWord(wordEl, S.word);
+  const shown = isImp ? "?" : S.word;
+  wordEl.textContent = shown;
+  fitWord(wordEl, shown);
   /* all or nobody - showing it to the table leaked it to the imposter anyway */
   $("#front-cat").textContent = S.hintCat ? catLabel(S.catKey) : "";
   const seesClue = S.hintMode==="imposter" && isImp;
@@ -649,12 +645,11 @@ function paintSeat(){
   $("#btn-next").disabled = true;
 }
 
-/* swipe up on the card to reveal, down to hide again. a deliberate gesture,
-   so a stray tap while the phone is being passed cannot expose the word.
-   the button hides it before advancing, so it is never up during a hand-off */
-/* The cover follows your finger. Drag it as far as you like and let go -
-   it settles open or shut. Nothing is ever revealed that you did not drag
-   open yourself, and you can peek as many times as you want. */
+/* Hold the cover open. It follows your finger up, and the moment you let go
+   it falls shut on its own - it never travels up by itself and never stays
+   open. So the word is only ever on screen while a finger is holding it
+   there, the card cannot be handed over uncovered, and you can peek again
+   as many times as you like. */
 const Peek = (function(){
   const card = $("#card");
   const cover = card.querySelector(".back");
@@ -679,12 +674,22 @@ const Peek = (function(){
   }
   function close(){ settle(0); }
 
+  /* where the cover really is on screen, which is not `offset` while it is
+     mid-fall - pick it up there instead of snapping it under the finger */
+  function currentY(){
+    const tr = getComputedStyle(cover).transform;
+    if(!tr || tr === "none") return 0;
+    try{ return new DOMMatrixReadOnly(tr).m42; }catch(e){ return offset; }
+  }
+
   card.addEventListener("pointerdown", e => {
     height = card.getBoundingClientRect().height;
     limit = -(height - pull.offsetHeight);   /* stop with the handle showing */
+    const at = currentY();                    /* read it before killing the ease */
+    cover.style.transition = "none";          /* 1:1 with the finger */
+    put(at);
     startY = e.clientY;
     base = offset;
-    cover.style.transition = "none";          /* 1:1 with the finger */
   });
 
   /* move/up live on window, not the card. pointer capture on the card could
@@ -699,10 +704,11 @@ const Peek = (function(){
     }
   });
 
+  /* let go and it drops, wherever it was. no snapping open, ever. */
   const release = () => {
     if(startY === null) return;
     startY = null;
-    settle(offset < limit * 0.45 ? limit : 0);
+    settle(0);
   };
   window.addEventListener("pointerup", release);
   window.addEventListener("pointercancel", release);
@@ -715,19 +721,29 @@ function hideCard(){ Peek.close(); }
 
 /* A touch that starts on the card and ends over the button leaves Chrome
    with no common click target, so that press does nothing and the button
-   looks like it needs pressing twice. Act on the touch release itself and
-   swallow the synthetic click that may follow it. */
+   looks like it needs pressing twice. Act on the touch release itself.
+   But acting on the release swaps the screen out from under the finger, and
+   the click that follows a moment later is aimed at a point, not at the
+   button that was there - so it landed on whatever now sits in the same
+   spot. "Start the game" was hitting "Reveal" on the screen it had just
+   opened, which is why the round jumped straight to naming the imposter.
+   One shield, at the document, kills that ghost wherever it tries to land:
+   a click with no press of its own behind it never gets through. */
+let handledAt = 0, pressedAt = 0;
+document.addEventListener("pointerdown", ()=>{ pressedAt = Date.now(); }, true);
+document.addEventListener("click", e => {
+  if(handledAt && pressedAt <= handledAt && Date.now() - handledAt < 900){
+    e.stopPropagation(); e.preventDefault();
+  }
+}, true);
+
 function onTap(el, fn){
-  let touchedAt = 0;
   el.addEventListener("pointerup", e => {
     if(e.pointerType === "mouse") return;
-    touchedAt = Date.now();
+    handledAt = Date.now();
     fn();
   });
-  el.addEventListener("click", () => {
-    if(Date.now() - touchedAt < 700) return;   /* already handled by touch */
-    fn();
-  });
+  el.addEventListener("click", fn);   /* mouse and keyboard; shielded on touch */
 }
 
 onTap($("#btn-next"), ()=>{
@@ -826,7 +842,8 @@ $$("#seg-lang button").forEach(b=>{
     try{ if("wakeLock" in navigator && !lock){ lock = await navigator.wakeLock.request("screen"); lock.addEventListener("release",()=>{lock=null;}); } }catch(e){}
   };
   document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) take(); });
-  document.addEventListener("click", take, {once:true});
+  /* pointerdown, not click - the tap shield above eats stray clicks */
+  document.addEventListener("pointerdown", take, {once:true});
   take();
 })();
 

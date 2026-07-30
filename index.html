@@ -28,6 +28,7 @@
   --signal-deep:#C4102A;
   --blue:#16359B;
   --player:#7AB0FF;   /* bright blue, 6.9:1 on the word card */
+  --imp:#FF6B7E;      /* light red, 5.5:1 - as legible as --player, not --signal */
   --card:#241340;      /* every card - bone on this is 14.4:1 */
   --dim:rgba(244,236,224,.72);
   --dim-2:rgba(244,236,224,.82);
@@ -233,6 +234,9 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   padding:10px 18px;border-radius:99px;
   background:rgba(122,176,255,.15);border:1.5px solid var(--player);color:var(--player);
 }
+/* the role is red again - but as a line of text, not a field of colour.
+   a few letters cannot be read from across the table; a red card could. */
+.front .badge.imp{background:rgba(255,107,126,.13);border-color:var(--imp);color:var(--imp)}
 
 /* ---- play ---- */
 .clock{font-family:var(--display);font-weight:800;font-size:clamp(64px,21vw,104px);line-height:.95;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
@@ -393,7 +397,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "2.0";
+const APP_VERSION = "2.1";
 
 /* ============ words ============ */
 const CATS = [
@@ -632,6 +636,7 @@ function paintSeat(){
   const isImp = S.impSet.has(S.seat);
   Peek.reset();
   $("#front-badge").textContent = isImp ? t("imposter") : t("word");
+  $("#front-badge").classList.toggle("imp", isImp);
   const wordEl = $("#front-word");
   const shown = isImp ? "?" : S.word;
   wordEl.textContent = shown;

@@ -244,6 +244,9 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .kv{display:flex;flex-direction:column;align-items:center;gap:8px}
 .kv .v{font-family:var(--display);font-weight:700;font-size:25px;text-align:center;line-height:1.2}
 .big-word{font-family:var(--display);font-weight:800;font-size:clamp(38px,11vw,58px);line-height:1.05;letter-spacing:-.02em;color:var(--brass);overflow-wrap:break-word;text-align:center}
+/* the odd word on an undercover reveal - same shape, quieter, and in the
+   imposter red so the two words never read as equals */
+.big-word.twin{font-size:clamp(28px,8vw,42px);color:var(--imp)}
 .imp-list{display:flex;flex-wrap:wrap;gap:9px;justify-content:center}
 .imp-pill{
   font-family:var(--display);font-weight:700;font-size:20px;padding:11px 18px;border-radius:13px;
@@ -302,6 +305,13 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
     <div style="height:14px"></div>
 
     <div class="field">
+      <div><div class="label" data-t="mode">Game mode</div><div class="hint" data-t="mode_h">Two ways to play</div></div>
+      <div class="seg" id="seg-mode">
+        <button data-mode="classic">Classic</button><button data-mode="undercover">Undercover</button>
+      </div>
+    </div>
+
+    <div class="field">
       <div><div class="label" data-t="players">Players</div><div class="hint" data-t="players_h">Phone goes around the table</div></div>
       <div class="stepper" data-step="players">
         <button data-d="-1" aria-label="fewer">−</button><div class="val" id="v-players">4</div><button data-d="1" aria-label="more">+</button>
@@ -337,7 +347,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
       <div class="switch on" id="sw-hint"><i></i></div>
     </div>
 
-    <div class="field">
+    <div class="field" id="f-hintw">
       <div><div class="label" data-t="hintw">Imposter sees clue</div><div class="hint" data-t="hintw_h">One clue per word, only for them</div></div>
       <div class="switch on" id="sw-hintw"><i></i></div>
     </div>
@@ -417,7 +427,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
     </div>
     <div class="stage">
       <div class="kv">
-        <div class="eyebrow" data-t="vote_q">Who is the imposter?</div>
+        <div class="eyebrow" id="vote-q" data-t="vote_q">Who is the imposter?</div>
       </div>
       <div class="votes" id="vote-list"></div>
       <div class="eyebrow center"><span data-t="vote_note">Everyone votes once</span> · <span id="vote-count">0/0</span></div>
@@ -427,12 +437,16 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
   <!-- REVEAL -->
   <section class="screen" id="s-reveal">
-    <div class="eyebrow" data-t="theword">the word was</div>
+    <div class="eyebrow" id="rev-eyebrow" data-t="theword">the word was</div>
     <div class="stage">
       <div class="big-word" id="rev-word">—</div>
       <div class="rev-hint" id="rev-hint"></div>
+      <div class="kv" id="rev-twin-box" style="display:none">
+        <div class="eyebrow" data-t="oddword">the odd word</div>
+        <div class="big-word twin" id="rev-twin">—</div>
+      </div>
       <div class="kv">
-        <div class="eyebrow" data-t="theimposter">the imposter</div>
+        <div class="eyebrow" id="rev-imp-label" data-t="theimposter">the imposter</div>
         <div class="imp-list" id="rev-imps"></div>
       </div>
       <div class="kv" id="rev-vote-box" style="display:none">
@@ -455,7 +469,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "2.5";
+const APP_VERSION = "2.6";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list
@@ -505,6 +519,29 @@ series:["Friends|uvijek u istom kafiću","Game of Thrones|svi koje zavoliš umru
 music:["Taylor Swift|pjesme o bivšima","Beyoncé|otišla iz grupe","Rihanna|sad prodaje šminku","Madonna|svako desetljeće druga","Michael Jackson|ples unatrag","Elvis|bokovi koji su šokirali","The Beatles|slavna četvorka","Queen|himna na svakom stadionu","ABBA|jednaki kostimi na pozornici","Eminem|najbrži jezik","Drake|počeo kao glumac","Adele|balade nakon prekida","Ed Sheeran|crvenokosi s gitarom","Lady Gaga|haljina od mesa","Billie Eilish|šapće u mikrofon","Dua Lipa|albanski korijeni","Shakira|trbušni ples na pozornici","Jennifer Lopez|zelena haljina","Britney Spears|školska uniforma iz spota","Justin Bieber|otkriven na YouTubeu","The Rolling Stones|jezik kao logo","AC/DC|školska uniforma na pozornici","Metallica|crni album","Nirvana|smajlić kao logo","Bob Marley|dreadovi","Snoop Dogg|dim posvuda","Coldplay|svjetleće narukvice","Bruno Mars|retro funk","The Weeknd|zavoji na licu","Ariana Grande|visoki rep","Katy Perry|sve u bojama slatkiša","Céline Dion|pjesma iz Titanica","Whitney Houston|jedna duga visoka nota","Elton John|lude naočale","Frank Sinatra|na svoj način","50 Cent|preživio devet metaka","Bob Dylan|pjesnik s usnom harmonikom","Jimi Hendrix|svirao zubima","Motörhead|najglasniji od svih","Pink Floyd|prizma na omotu","Led Zeppelin|pioniri hard rocka","Guns N' Roses|cilindar na pozornici","Bon Jovi|era velikih frizura","U2|album koji se sam pojavio na mobitelu","David Bowie|dva različita oka","Bruce Springsteen|šef","Johnny Cash|uvijek u crnom"]
 }};
 
+/* ============ undercover pairs ============ */
+/* its own word list, nothing to do with WORDS. two close words per entry:
+   most of the table gets one, the odd player gets the other and is never
+   told. no clues here - the different word IS the clue. a category only
+   shows up in undercover if it has pairs for that language. */
+const PAIRS = {
+en:{
+food:["Coffee|Tea","Pancakes|Waffles","Burger|Sandwich","Ketchup|Mustard","Cake|Pie","Soup|Stew","Rice|Pasta","Lemon|Lime","Honey|Jam","Milk|Cream","Beer|Wine","Whiskey|Rum","Popcorn|Chips","Ice cream|Sorbet","Bread|Toast","Butter|Margarine","Doughnut|Croissant","Chocolate|Candy","Watermelon|Melon","Pizza|Lasagna"],
+animals:["Wolf|Dog","Crocodile|Alligator","Frog|Toad","Rabbit|Hare","Butterfly|Moth","Donkey|Horse","Leopard|Cheetah","Crow|Raven","Dolphin|Shark","Mouse|Rat","Bee|Wasp","Goat|Sheep","Duck|Goose","Camel|Llama","Turtle|Crab","Owl|Eagle","Tiger|Lion","Snake|Lizard","Squirrel|Hedgehog","Whale|Seal"],
+objects:["Fork|Spoon","Pen|Pencil","Cup|Glass","Umbrella|Parasol","Bag|Backpack","Broom|Mop","Candle|Lamp","Knife|Scissors","Rope|Chain","Hammer|Axe","Mirror|Window","Blanket|Towel","Soap|Shampoo","Key|Lock","Book|Newspaper","Bicycle|Motorcycle","Guitar|Violin","Chair|Sofa","Watch|Ring","Phone|Tablet"],
+places:["Cinema|Theatre","Library|Bookstore","Hospital|Pharmacy","Restaurant|Cafe","School|University","Zoo|Aquarium","Airport|Train station","Bakery|Butcher","Museum|Gallery","Forest|Park","Mountain|Hill","Lake|River","Beach|Pool","Bar|Nightclub","Gym|Stadium","Farm|Garden","Hotel|Hostel","Church|Monastery","Prison|Courthouse","Castle|Tower"],
+jobs:["Doctor|Nurse","Teacher|Professor","Chef|Baker","Police officer|Soldier","Lawyer|Judge","Barber|Hairdresser","Waiter|Bartender","Pilot|Flight attendant","Singer|Dancer","Actor|Comedian","Farmer|Gardener","Carpenter|Mason","Electrician|Plumber","Journalist|Writer","Firefighter|Lifeguard","Vet|Zookeeper","Mechanic|Driver","Scientist|Engineer","Painter|Photographer","Dentist|Surgeon"],
+sports:["Football|Handball","Basketball|Volleyball","Tennis|Badminton","Swimming|Diving","Boxing|Wrestling","Skiing|Snowboarding","Chess|Checkers","Judo|Karate","Baseball|Cricket","Surfing|Sailing","Marathon|Sprint","Rowing|Kayaking","Darts|Bowling","Water polo|Rugby","Climbing|Hiking","Cycling|Motocross","Gymnastics|Ballet","Hockey|Ice skating","Golf|Polo","Archery|Shooting"]
+},
+hr:{
+food:["Kava|Čaj","Palačinke|Vafli","Burger|Sendvič","Kečap|Senf","Torta|Pita","Juha|Gulaš","Riža|Tjestenina","Limun|Limeta","Med|Džem","Mlijeko|Vrhnje","Pivo|Vino","Viski|Rum","Kokice|Čips","Sladoled|Sorbet","Kruh|Tost","Maslac|Margarin","Krafna|Kroasan","Čokolada|Bombon","Lubenica|Dinja","Pizza|Lazanje"],
+animals:["Vuk|Pas","Krokodil|Aligator","Žaba|Krastača","Kunić|Zec","Leptir|Moljac","Magarac|Konj","Leopard|Gepard","Vrana|Gavran","Dupin|Morski pas","Miš|Štakor","Pčela|Osa","Koza|Ovca","Patka|Guska","Deva|Lama","Kornjača|Rak","Sova|Orao","Tigar|Lav","Zmija|Gušter","Vjeverica|Jež","Kit|Tuljan"],
+objects:["Vilica|Žlica","Kemijska|Olovka","Šalica|Čaša","Kišobran|Suncobran","Torba|Ruksak","Metla|Krpa za pod","Svijeća|Svjetiljka","Nož|Škare","Uže|Lanac","Čekić|Sjekira","Ogledalo|Prozor","Deka|Ručnik","Sapun|Šampon","Ključ|Lokot","Knjiga|Novine","Bicikl|Motor","Gitara|Violina","Stolica|Kauč","Sat|Prsten","Mobitel|Tablet"],
+places:["Kino|Kazalište","Knjižnica|Knjižara","Bolnica|Ljekarna","Restoran|Kafić","Škola|Fakultet","Zoološki vrt|Akvarij","Aerodrom|Kolodvor","Pekara|Mesnica","Muzej|Galerija","Šuma|Park","Planina|Brdo","Jezero|Rijeka","Plaža|Bazen","Bar|Noćni klub","Teretana|Stadion","Farma|Vrt","Hotel|Hostel","Crkva|Samostan","Zatvor|Sud","Dvorac|Toranj"],
+jobs:["Liječnik|Medicinska sestra","Učitelj|Profesor","Kuhar|Pekar","Policajac|Vojnik","Odvjetnik|Sudac","Brijač|Frizer","Konobar|Barmen","Pilot|Stjuardesa","Pjevač|Plesač","Glumac|Komičar","Poljoprivrednik|Vrtlar","Stolar|Zidar","Električar|Vodoinstalater","Novinar|Pisac","Vatrogasac|Spasilac","Veterinar|Čuvar u zoo vrtu","Mehaničar|Vozač","Znanstvenik|Inženjer","Slikar|Fotograf","Zubar|Kirurg"],
+sports:["Nogomet|Rukomet","Košarka|Odbojka","Tenis|Badminton","Plivanje|Skokovi u vodu","Boks|Hrvanje","Skijanje|Snowboard","Šah|Dama","Judo|Karate","Bejzbol|Kriket","Surfanje|Jedrenje","Maraton|Sprint","Veslanje|Kajak","Pikado|Kuglanje","Vaterpolo|Ragbi","Penjanje|Planinarenje","Biciklizam|Motokros","Gimnastika|Balet","Hokej|Klizanje","Golf|Polo","Streličarstvo|Streljaštvo"]
+}};
+
 /* ============ ui strings ============ */
 const T = {
 en:{players:"Players",players_h:"Around the table",imposters:"Imposters",imposters_h:"Under a third of the table",
@@ -517,6 +554,9 @@ rand:"Secret imposter count",rand_h:"Could be nobody, could be all",
 tagline:"Everyone gets the same secret word. Someone doesn't. Find out who.",
 start:"Start the round",noone:"Nobody",time:"Time",names:"Names",nameph:"Name (optional)",
 hintw:"Imposter sees clue",hintw_h:"One clue, only for them",everyone:"Everyone",
+mode:"Game mode",mode_h:"Two ways to play",m_classic:"Classic",m_undercover:"Undercover",
+mostyou:"most of you had",allhad:"everyone had",oddword:"the odd word",oddone:"the odd one out",
+vote_q_u:"Who had a different word?",
 vote:"Voting",vote_h:"Accuse before the reveal",vote_q:"Who is the imposter?",
 vote_note:"Everyone votes once",thevote:"the vote",
 caught:"Caught!",partial:"Half right",missed:"Got away!",
@@ -531,6 +571,9 @@ rand:"Tajni broj uljeza",rand_h:"Može nitko, mogu svi",
 tagline:"Svi dobiju istu tajnu riječ. Netko ne. Otkrijte tko.",
 start:"Kreni s rundom",noone:"Nitko",time:"Vrijeme",names:"Imena",nameph:"Ime (nije obavezno)",
 hintw:"Uljez vidi natuknicu",hintw_h:"Jedna natuknica po riječi",everyone:"Svi",
+mode:"Način igre",mode_h:"Dva načina igre",m_classic:"Klasik",m_undercover:"Druga riječ",
+mostyou:"većina je imala",allhad:"svi su imali",oddword:"druga riječ",oddone:"tko je imao drugu",
+vote_q_u:"Tko je imao drugu riječ?",
 vote:"Glasanje",vote_h:"Optužite prije otkrivanja",vote_q:"Tko je uljez?",
 vote_note:"Svatko glasa jednom",thevote:"glasovi",
 caught:"Ulovljeni!",partial:"Napola točno",missed:"Izvukli su se!",
@@ -539,8 +582,8 @@ tableline:"igra u krug · {n} igrača"}
 
 /* ============ state ============ */
 /* cats: which categories are in play. empty means all of them. */
-const S = {players:4, imposters:1, minutes:4, hintCat:true, hintMode:"imposter", vote:true, lang:"hr", cats:[], names:[],
-           word:"", clue:"", catKey:"", impSet:new Set(), votes:null, seat:1, first:1, left:0, timer:null, running:false};
+const S = {players:4, imposters:1, minutes:4, hintCat:true, hintMode:"imposter", vote:true, mode:"classic", lang:"hr", cats:[], names:[],
+           word:"", twin:"", clue:"", catKey:"", impSet:new Set(), votes:null, seat:1, first:1, left:0, timer:null, running:false};
 
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
@@ -557,7 +600,7 @@ function save(){
   try{
     localStorage.setItem(SAVE_KEY, JSON.stringify({
       players:S.players, imposters:S.imposters, minutes:S.minutes,
-      hintCat:S.hintCat, hintMode:S.hintMode, vote:S.vote, lang:S.lang, cats:S.cats,
+      hintCat:S.hintCat, hintMode:S.hintMode, vote:S.vote, mode:S.mode, lang:S.lang, cats:S.cats,
       names:S.names.slice(0,16)
     }));
   }catch(e){}
@@ -574,6 +617,7 @@ function load(){
     if(num(d.minutes))   S.minutes   = d.minutes;
     if(typeof d.hintCat === "boolean") S.hintCat = d.hintCat;
     if(typeof d.vote === "boolean") S.vote = d.vote;
+    if(d.mode === "classic" || d.mode === "undercover") S.mode = d.mode;
     /* "all" was dropped as an option - fold old saves onto imposter-only */
     if(d.hintMode === "off") S.hintMode = "off";
     else if(d.hintMode === "imposter" || d.hintMode === "all") S.hintMode = "imposter";
@@ -611,6 +655,12 @@ function paintSetup(){
   $("#sw-hint").classList.toggle("on", S.hintCat);
   $("#sw-hintw").classList.toggle("on", S.hintMode === "imposter");
   $("#sw-vote").classList.toggle("on", S.vote);
+  $$("#seg-mode button").forEach(b=>{
+    b.textContent = t("m_" + b.dataset.mode);
+    b.classList.toggle("on", b.dataset.mode === S.mode);
+  });
+  /* no clues at all in undercover - the other word is the clue */
+  $("#f-hintw").style.display = S.mode === "undercover" ? "none" : "";
   $("#sw-rand").classList.toggle("on", rnd);
   $("#st-imposters").classList.toggle("locked", rnd);
   $$("#seg-lang button").forEach(b=>b.classList.toggle("on", b.dataset.lang===S.lang));
@@ -664,7 +714,16 @@ function paintChips(){
   }));
 }
 
-function catAvailable(c){ return !c.langs || c.langs.indexOf(S.lang)>=0; }
+/* a category needs the right language, and in undercover it also needs
+   pairs written for it - categories without pairs simply do not show up */
+function catAvailable(c){
+  if(c.langs && c.langs.indexOf(S.lang) < 0) return false;
+  if(S.mode === "undercover"){
+    const p = PAIRS[S.lang] && PAIRS[S.lang][c.key];
+    return !!(p && p.length);
+  }
+  return true;
+}
 function catsFor(){ return CATS.filter(catAvailable); }
 function catLabel(key){ const c = CATS.find(x=>x.key===key); return c ? c[S.lang] : ""; }
 
@@ -703,9 +762,20 @@ function deal(){
   const chosen = S.cats.filter(k=>avail.indexOf(k)>=0);
   const inPlay = chosen.length ? chosen : avail;
   S.catKey = inPlay[Math.floor(Math.random()*inPlay.length)];
-  const pool = WORDS[S.lang][S.catKey];
-  const pick = pool[Math.floor(Math.random()*pool.length)].split("|");
-  S.word = pick[0]; S.clue = pick[1] || "";
+  if(S.mode === "undercover"){
+    const pool = PAIRS[S.lang][S.catKey];
+    const pair = pool[Math.floor(Math.random()*pool.length)].split("|");
+    /* coin-flip which half of the pair the table gets, so the odd word is
+       not always the same side of the list */
+    const flip = Math.random() < 0.5;
+    S.word = flip ? pair[1] : pair[0];
+    S.twin = flip ? pair[0] : pair[1];
+    S.clue = "";                      /* the other word is the only clue */
+  } else {
+    const pool = WORDS[S.lang][S.catKey];
+    const pick = pool[Math.floor(Math.random()*pool.length)].split("|");
+    S.word = pick[0]; S.clue = pick[1] || ""; S.twin = "";
+  }
 
   const count = S.imposters === -1 ? rollImposterCount(S.players) : S.imposters;
   const seats = [];
@@ -725,16 +795,22 @@ function paintSeat(){
   $("#seat-name").textContent = nameOf(S.seat);
   $("#deal-progress").textContent = S.seat+" / "+S.players;
   const isImp = S.impSet.has(S.seat);
+  const und = S.mode === "undercover";
   Peek.reset();
-  $("#front-badge").textContent = isImp ? t("imposter") : t("word");
-  $("#front-badge").classList.toggle("imp", isImp);
+  /* undercover: no role on the card at all. every seat sees a word and a
+     category and nothing else - the odd player is never told they are odd. */
+  $("#front-badge").style.display = und ? "none" : "";
+  if(!und){
+    $("#front-badge").textContent = isImp ? t("imposter") : t("word");
+    $("#front-badge").classList.toggle("imp", isImp);
+  }
   const wordEl = $("#front-word");
-  const shown = isImp ? "?" : S.word;
+  const shown = und ? (isImp ? S.twin : S.word) : (isImp ? "?" : S.word);
   wordEl.textContent = shown;
   fitWord(wordEl, shown);
   /* all or nobody - showing it to the table leaked it to the imposter anyway */
   $("#front-cat").textContent = S.hintCat ? catLabel(S.catKey) : "";
-  const seesClue = S.hintMode==="imposter" && isImp;
+  const seesClue = !und && S.hintMode==="imposter" && isImp;
   $("#front-hint").textContent = seesClue ? S.clue : "";
   const last = S.seat >= S.players;
   $("#btn-next").textContent = last ? t("start") : t("next");
@@ -929,14 +1005,27 @@ function openVote(){
     box.appendChild(row);
   }
   paintVoteMeta();
+  $("#vote-q").textContent = S.mode==="undercover" ? t("vote_q_u") : t("vote_q");
   show("s-vote");
 }
 
 function doReveal(){
   clearInterval(S.timer); S.running=false;
-  $("#rev-word").textContent = S.word;
-  fitWord($("#rev-word"), S.word);
+  const und = S.mode === "undercover";
+  /* undercover degenerate rounds: with nobody odd the whole table held the
+     majority word, with everybody odd they all held the other one. either
+     way there is only one word to show and no second word to compare. */
+  const allSame = und && (S.impSet.size === 0 || S.impSet.size === S.players);
+  const main = und && S.impSet.size === S.players ? S.twin : S.word;
+  $("#rev-word").textContent = main;
+  fitWord($("#rev-word"), main);
   $("#rev-hint").textContent = S.clue;
+  const tb = $("#rev-twin-box");
+  if(und && !allSame){
+    tb.style.display = "";
+    $("#rev-twin").textContent = S.twin;
+    fitWord($("#rev-twin"), S.twin);
+  } else tb.style.display = "none";
   const box = $("#rev-imps"); box.innerHTML="";
   const pill = (text, cls) => {
     const d=document.createElement("div"); d.className="imp-pill"+(cls?" "+cls:"");
@@ -973,6 +1062,9 @@ function doReveal(){
     vb.style.display = "none";
   }
   paintText();
+  /* after paintText, which rewrites every [data-t] element from scratch */
+  $("#rev-eyebrow").textContent = und ? (allSame ? t("allhad") : t("mostyou")) : t("theword");
+  $("#rev-imp-label").textContent = und ? t("oddone") : t("theimposter");
   show("s-reveal");
 }
 
@@ -1011,6 +1103,9 @@ $("#sw-rand").onclick  = ()=>{ S.imposters = S.imposters===-1 ? 1 : -1; buzz(14)
 $("#sw-vote").onclick  = ()=>{ S.vote = !S.vote; buzz(14); paintSetup(); };
 $$("#seg-lang button").forEach(b=>{
   b.onclick = ()=>{ S.lang = b.dataset.lang; buzz(10); paintSetup(); };
+});
+$$("#seg-mode button").forEach(b=>{
+  b.onclick = ()=>{ S.mode = b.dataset.mode; buzz(14); paintSetup(); };
 });
 
 /* keep the screen from sleeping mid-round where supported.

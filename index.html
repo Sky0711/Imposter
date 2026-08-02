@@ -366,7 +366,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
     </div>
 
     <div class="field">
-      <div><div class="label" data-t="rand">Secret imposter count</div><div class="hint" data-t="rand_h">Could be nobody, could be all of you</div></div>
+      <div><div class="label" data-t="rand">Random count</div><div class="hint" data-t="rand_h">Up to that many. Could be none.</div></div>
       <div class="switch" id="sw-rand"><i></i></div>
     </div>
 
@@ -517,7 +517,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "4.1";
+const APP_VERSION = "4.2";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list
@@ -607,7 +607,7 @@ lang:"Language",lang_h:"Word list",category:"Category",deal:"Start the game",han
 note_peek:"Nobody else looks.",next:"Next player",inplay:"round in play",firstup:"First to describe",
 cat_public:"Category",pause:"Pause",resume:"Resume",reveal:"Reveal",theword:"the word was",theimposter:"the imposter",
 settings:"Settings",again:"Next round",mix:"All",player:"Player",word:"Player",imposter:"You are the imposter",
-rand:"Secret imposter count",rand_h:"Could be nobody, could be all",
+rand:"Random count",rand_h:"Up to that many. Could be none.",
 tagline:"Everyone gets the same secret word. Someone doesn't. Find out who.",
 start:"Start the round",noone:"Nobody",time:"Time",names:"Names",nameph:"Name (optional)",
 hintw:"Imposter sees clue",hintw_h:"One clue, only for them",everyone:"Everyone",
@@ -626,7 +626,7 @@ lang:"Jezik",lang_h:"Popis riječi",category:"Kategorija",deal:"Pokreni igru",ha
 note_peek:"Nitko drugi ne gleda.",next:"Sljedeći igrač",inplay:"runda u tijeku",firstup:"Prvi opisuje",
 cat_public:"Kategorija",pause:"Pauza",resume:"Nastavi",reveal:"Otkrij",theword:"riječ je bila",theimposter:"uljez",
 settings:"Postavke",again:"Nova runda",mix:"Sve",player:"Igrač",word:"Igrač",imposter:"Ti si uljez",
-rand:"Tajni broj uljeza",rand_h:"Može nitko, mogu svi",
+rand:"Nasumičan broj",rand_h:"Najviše toliko. Može i nijedan.",
 tagline:"Svi dobiju istu tajnu riječ. Netko ne. Otkrijte tko.",
 start:"Kreni s rundom",noone:"Nitko",time:"Vrijeme",names:"Imena",nameph:"Ime (nije obavezno)",
 hintw:"Uljez vidi natuknicu",hintw_h:"Jedna natuknica po riječi",everyone:"Svi",
@@ -643,7 +643,7 @@ tableline:"igra u krug · {n} igrača"}
 
 /* ============ state ============ */
 /* cats: which categories are in play. empty means all of them. */
-const S = {players:4, imposters:1, minutes:4, hintCat:true, hintMode:"imposter", hintStyle:"simple", vote:true, mode:"classic", lang:"hr", cats:[], names:[],
+const S = {players:4, imposters:1, rand:false, minutes:4, hintCat:true, hintMode:"imposter", hintStyle:"simple", vote:true, mode:"classic", lang:"hr", cats:[], names:[],
            word:"", twin:"", clue:"", catKey:"", impSet:new Set(), votes:null, seat:1, first:1, left:0, timer:null, running:false};
 
 const $ = s => document.querySelector(s);
@@ -660,7 +660,7 @@ const SAVE_KEY = "imposter.setup.v1";
 function save(){
   try{
     localStorage.setItem(SAVE_KEY, JSON.stringify({
-      players:S.players, imposters:S.imposters, minutes:S.minutes,
+      players:S.players, imposters:S.imposters, rand:S.rand, minutes:S.minutes,
       hintCat:S.hintCat, hintMode:S.hintMode, hintStyle:S.hintStyle, vote:S.vote, mode:S.mode, lang:S.lang, cats:S.cats,
       names:S.names.slice(0,16)
     }));
@@ -674,7 +674,10 @@ function load(){
     const d = JSON.parse(raw) || {};
     const num = v => typeof v==="number" && isFinite(v);
     if(num(d.players))   S.players   = d.players;
-    if(num(d.imposters)) S.imposters = d.imposters;
+    /* pre-4.2 saves used -1 to mean "secret count"; it now means "up to 1" */
+    if(num(d.imposters)) S.imposters = d.imposters === -1 ? 1 : d.imposters;
+    if(d.imposters === -1) S.rand = true;
+    if(typeof d.rand === "boolean") S.rand = d.rand;
     if(num(d.minutes))   S.minutes   = d.minutes;
     if(typeof d.hintCat === "boolean") S.hintCat = d.hintCat;
     if(typeof d.vote === "boolean") S.vote = d.vote;
@@ -694,9 +697,11 @@ function load(){
 function clamp(){
   S.players = Math.max(3, Math.min(16, S.players));
   S.minutes = Math.max(0, Math.min(15, S.minutes));
-  const maxImp = Math.max(1, Math.floor((S.players-1)/2));
-  if(S.imposters < 0) S.imposters = -1;
-  else S.imposters = Math.max(1, Math.min(maxImp, S.imposters));
+  /* a fixed count stays under half the table, or the game is not worth
+     playing. a ceiling may go all the way up - it is a maximum, not a
+     promise, so "up to everyone" is a legitimate thing to ask for. */
+  const maxImp = S.rand ? S.players : Math.max(1, Math.floor((S.players-1)/2));
+  S.imposters = Math.max(1, Math.min(maxImp, S.imposters));
 }
 
 function paintText(){
@@ -714,8 +719,8 @@ function paintSetup(){
   const tc = document.querySelector('meta[name="theme-color"]');
   if(tc) tc.setAttribute("content", S.mode === "undercover" ? "#0E2029" : "#1A0F2E");
   $("#v-players").textContent = S.players;
-  const rnd = S.imposters === -1;
-  $("#v-imposters").textContent = rnd ? "?" : S.imposters;
+  const rnd = S.rand;
+  $("#v-imposters").textContent = rnd ? "≤" + S.imposters : S.imposters;
   $("#v-imposters").classList.toggle("rand", rnd);
   $("#v-minutes").textContent = S.minutes;
   $("#app-version").textContent = "v" + APP_VERSION;
@@ -737,7 +742,6 @@ function paintSetup(){
     b.classList.toggle("on", b.dataset.hs === S.hintStyle);
   });
   $("#sw-rand").classList.toggle("on", rnd);
-  $("#st-imposters").classList.toggle("locked", rnd);
   $$("#seg-lang button").forEach(b=>b.classList.toggle("on", b.dataset.lang===S.lang));
   paintNames();
   paintChips();
@@ -832,19 +836,11 @@ function fitWord(el, w){
 }
 
 /* ============ dealing ============ */
-/* U-shaped draw over 0..n: the two extremes are the likeliest single
-   outcomes after "one imposter", the muddy middle counts are rarest. */
-const EXTREME_BIAS = 2.2; /* raise to favour 0-or-all harder, lower to flatten */
-function rollImposterCount(n){
-  const w = [];
-  let sum = 0;
-  for(let k=0;k<=n;k++){
-    const x = (k===0 || k===n) ? EXTREME_BIAS : 4/(k+1);
-    w.push(x); sum += x;
-  }
-  let r = Math.random()*sum;
-  for(let k=0;k<=n;k++){ r -= w[k]; if(r<=0) return k; }
-  return n;
+/* "up to" draw: the number on the stepper is a ceiling, not a promise.
+   Every count from none up to that many is equally likely, so setting 2
+   can deal 0, 1 or 2 - and nobody at the table knows which. */
+function rollImposterCount(cap){
+  return Math.floor(Math.random() * (cap + 1));
 }
 
 function deal(){
@@ -879,7 +875,7 @@ function deal(){
     S.clue = pick[at] || pick[1] || "";
   }
 
-  const count = S.imposters === -1 ? rollImposterCount(S.players) : S.imposters;
+  const count = S.rand ? rollImposterCount(S.imposters) : S.imposters;
   const seats = [];
   for(let i=1;i<=S.players;i++) seats.push(i);
   for(let i=seats.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [seats[i],seats[j]]=[seats[j],seats[i]]; }
@@ -1090,7 +1086,7 @@ function paintVoteMeta(){
    Either way the honest answer is "no one was different", so the ballot needs
    a way to say it. Seat 0 is that option; it only appears where it can be
    right, so a fixed-count round never offers a trap. */
-function nobodyOption(){ return S.mode === "undercover" && S.imposters === -1; }
+function nobodyOption(){ return S.rand; }
 
 function openVote(){
   S.votes = new Array(S.players+1).fill(0);
@@ -1130,7 +1126,15 @@ function doReveal(){
   /* undercover degenerate rounds: with nobody odd the whole table held the
      majority word, with everybody odd they all held the other one. either
      way there is only one word to show and no second word to compare. */
-  const allSame = und && (S.impSet.size === 0 || S.impSet.size === S.players);
+  /* an "up to" cap can roll zero, so "nobody was odd" is a real outcome in
+     either mode; in undercover it also means every card matched */
+  const noneOdd = S.impSet.size === 0;
+  const everyoneOdd = S.impSet.size === S.players;
+  /* in undercover, nobody-odd and everybody-odd are the same round from the
+     table's side: every card matched. in classic they are not - there you
+     can see your own role - so "no one" only wins when there truly was none. */
+  const allSame = und && (noneOdd || everyoneOdd);
+  const nobodyRight = noneOdd || (und && everyoneOdd);
   const main = und && S.impSet.size === S.players ? S.twin : S.word;
   $("#rev-word").textContent = main;
   fitWord($("#rev-word"), main);
@@ -1161,7 +1165,7 @@ function doReveal(){
     votedSeats.sort((a,b)=> S.votes[b]-S.votes[a] || a-b);
     votedSeats.forEach(n=>{
       /* a vote for "no one" was right exactly when no one was different */
-      const right = n === 0 ? allSame : S.impSet.has(n);
+      const right = n === 0 ? nobodyRight : S.impSet.has(n);
       const d = document.createElement("div");
       d.className = "imp-pill " + (right ? "hit" : "miss");
       d.textContent = (n === 0 ? t("noone") : seatLabel(n)) + " ×" + S.votes[n];
@@ -1170,9 +1174,9 @@ function doReveal(){
     const top = Math.max.apply(null, S.votes);
     const accused = votedSeats.filter(n=>S.votes[n]===top);
     let state;
-    if(allSame){
-      /* the whole table held the same word, so the only correct verdict is
-         accusing no one - and it has to win outright, not tie with a seat */
+    if(nobodyRight){
+      /* nothing to catch, so accusing no one is the only correct call - and
+         it has to win outright, not merely tie with a seat */
       state = (accused.length === 1 && accused[0] === 0) ? "caught" : "missed";
     } else {
       const hits = accused.filter(n=>n>0 && S.impSet.has(n)).length;
@@ -1223,7 +1227,7 @@ $$(".stepper").forEach(st=>{
 /* every setting answers with a short buzz, so a tap is felt as well as seen */
 $("#sw-hint").onclick  = ()=>{ S.hintCat = !S.hintCat; buzz(14); paintSetup(); };
 $("#sw-hintw").onclick = ()=>{ S.hintMode = S.hintMode==="imposter" ? "off" : "imposter"; buzz(14); paintSetup(); };
-$("#sw-rand").onclick  = ()=>{ S.imposters = S.imposters===-1 ? 1 : -1; buzz(14); paintSetup(); };
+$("#sw-rand").onclick  = ()=>{ S.rand = !S.rand; buzz(14); paintSetup(); };
 $("#sw-vote").onclick  = ()=>{ S.vote = !S.vote; buzz(14); paintSetup(); };
 $$("#seg-lang button").forEach(b=>{
   b.onclick = ()=>{ S.lang = b.dataset.lang; buzz(10); paintSetup(); };

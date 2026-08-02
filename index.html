@@ -179,7 +179,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   position:relative;width:100%;max-width:340px;aspect-ratio:3/4.1;
   border-radius:26px;overflow:hidden;
   background:linear-gradient(160deg,var(--velvet-2),var(--velvet));
-  border:1px solid rgba(244,236,224,.14);
+  border:1px solid rgba(224,169,59,.30);
   box-shadow:0 26px 60px -24px rgba(0,0,0,.85);
   touch-action:none;   /* the swipe is ours, not the browser's */
   display:flex;align-items:center;justify-content:center;
@@ -200,6 +200,13 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 /* the cover sits on top and slides with your finger; the face is always
    underneath, so how much you uncover is exactly how far you dragged */
 .card .back{z-index:2;will-change:transform}
+/* the card carries the mode's colour too - the edge everyone sees across the
+   table and the handle your thumb sits on, brass in classic, jade here */
+:root[data-mode="undercover"] .card{border-color:rgba(53,192,142,.32)}
+:root[data-mode="undercover"] .pull{
+  background:rgba(53,192,142,.16);
+  border-top-color:rgba(53,192,142,.40);
+}
 /* the light in the room changes with the mode, before any component does */
 :root[data-mode="undercover"] body::before{
   background:
@@ -244,8 +251,8 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   position:absolute;left:0;right:0;bottom:0;
   display:flex;flex-direction:column;align-items:center;gap:1px;
   padding:9px 16px 15px;
-  background:rgba(244,236,224,.14);
-  border-top:1.5px solid rgba(244,236,224,.3);
+  background:rgba(224,169,59,.15);
+  border-top:1.5px solid rgba(224,169,59,.36);
   color:var(--bone);
 }
 .pull b{font-size:34px;line-height:1;font-weight:400;animation:pulse 2.4s ease-in-out infinite}
@@ -510,7 +517,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "4.9";
+const APP_VERSION = "5.0";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list

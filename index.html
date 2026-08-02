@@ -117,7 +117,9 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .backbtn:active{background:var(--velvet)}
 .btn:active{transform:scale(.975)}
 .btn.ghost{background:transparent;color:var(--bone);border:1.5px solid rgba(244,236,224,.22);font-weight:600}
-.btn.brass{background:var(--brass);color:#2A1A05}
+/* the primary action follows the mode, like every other accent */
+.btn.brass{background:var(--accent);color:#2A1A05}
+:root[data-mode="undercover"] .btn.brass{color:#06251A}
 .btn[disabled]{opacity:.35;pointer-events:none}
 .row{display:flex;gap:12px}
 .spacer{flex:1;min-height:16px}
@@ -459,7 +461,8 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
     </div>
     <div class="row">
       <button class="btn ghost" id="btn-pause" data-t="pause">Pause</button>
-      <button class="btn brass" id="btn-reveal" data-t="reveal">Reveal</button>
+      <!-- label is set in startRound: "Vote" when voting is on, else "Reveal" -->
+      <button class="btn brass" id="btn-reveal">Reveal</button>
     </div>
   </section>
 
@@ -513,7 +516,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "3.8";
+const APP_VERSION = "3.9";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list
@@ -611,7 +614,7 @@ mode:"Game mode",mode_h:"Two ways to play",m_classic:"Classic",m_undercover:"Und
 hstyle:"Clue style",hstyle_h:"Only in categories marked +",
 hs_simple:"Simple",hs_niche:"Niche",hs_long:"Long",hs_random:"Mix",
 mostyou:"most of you had",allhad:"everyone had",oddword:"the odd word",oddone:"the odd one out",
-vote_q_u:"Who had a different word?",
+vote_q_u:"Who had a different word?",govote:"Vote",
 vote:"Voting",vote_h:"Accuse before the reveal",vote_q:"Who is the imposter?",
 vote_note:"Everyone votes once",thevote:"the vote",
 caught:"Caught!",partial:"Half right",missed:"Got away!",
@@ -630,7 +633,7 @@ mode:"Način igre",mode_h:"Dva načina igre",m_classic:"Klasik",m_undercover:"Dr
 hstyle:"Vrsta natuknice",hstyle_h:"Samo u kategorijama s +",
 hs_simple:"Laka",hs_niche:"Znalačka",hs_long:"Duga",hs_random:"Mix",
 mostyou:"većina je imala",allhad:"svi su imali",oddword:"druga riječ",oddone:"tko je imao drugu",
-vote_q_u:"Tko je imao drugu riječ?",
+vote_q_u:"Tko je imao drugu riječ?",govote:"Glasanje",
 vote:"Glasanje",vote_h:"Optužite prije otkrivanja",vote_q:"Tko je uljez?",
 vote_note:"Svatko glasa jednom",thevote:"glasovi",
 caught:"Ulovljeni!",partial:"Napola točno",missed:"Izvukli su se!",
@@ -1048,6 +1051,9 @@ function startRound(){
   }
   $("#btn-pause").style.display = S.minutes>0 ? "" : "none";
   $("#btn-pause").textContent = t("pause");
+  /* with voting on this button opens the ballot, not the reveal - say so,
+     otherwise it promises the word and hands you a vote screen instead */
+  $("#btn-reveal").textContent = S.vote ? t("govote") : t("reveal");
   show("s-play");
 }
 

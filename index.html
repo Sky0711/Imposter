@@ -147,6 +147,13 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   background:var(--velvet);border:1.5px solid transparent;color:var(--dim-2);
 }
 .chip.on{background:transparent;border-color:var(--brass);color:var(--brass)}
+/* the blue plus marks the categories that actually carry the three clue
+   tiers. it wears the same blue as the clue style control, so the mark and
+   the setting it refers to read as one thing. after .chip.on on purpose -
+   the plus keeps its blue even while the chip is selected and gone gold. */
+.chip .plus{color:var(--player);font-weight:800;font-size:17px;margin-left:6px}
+#seg-hstyle button{color:var(--player)}
+#seg-hstyle button.on{background:var(--player);color:#0A1A33}
 .seg{display:flex;gap:4px;background:var(--velvet);border-radius:13px;padding:4px;flex:none}
 .seg button{min-height:44px;padding:10px 16px;border-radius:10px;font-size:14.5px;font-weight:700;color:var(--dim-2);font-family:var(--body);letter-spacing:.02em}
 .seg button.on{background:var(--bone);color:var(--ink)}
@@ -476,7 +483,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "2.8";
+const APP_VERSION = "2.9";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list
@@ -569,7 +576,7 @@ tagline:"Everyone gets the same secret word. Someone doesn't. Find out who.",
 start:"Start the round",noone:"Nobody",time:"Time",names:"Names",nameph:"Name (optional)",
 hintw:"Imposter sees clue",hintw_h:"One clue, only for them",everyone:"Everyone",
 mode:"Game mode",mode_h:"Two ways to play",m_classic:"Classic",m_undercover:"Undercover",
-hstyle:"Clue style",hstyle_h:"How the imposter's clue reads",
+hstyle:"Clue style",hstyle_h:"Only in categories marked +",
 hs_simple:"Simple",hs_niche:"Niche",hs_long:"Long",hs_random:"Mix",
 mostyou:"most of you had",allhad:"everyone had",oddword:"the odd word",oddone:"the odd one out",
 vote_q_u:"Who had a different word?",
@@ -588,7 +595,7 @@ tagline:"Svi dobiju istu tajnu riječ. Netko ne. Otkrijte tko.",
 start:"Kreni s rundom",noone:"Nitko",time:"Vrijeme",names:"Imena",nameph:"Ime (nije obavezno)",
 hintw:"Uljez vidi natuknicu",hintw_h:"Jedna natuknica po riječi",everyone:"Svi",
 mode:"Način igre",mode_h:"Dva načina igre",m_classic:"Klasik",m_undercover:"Druga riječ",
-hstyle:"Vrsta natuknice",hstyle_h:"Kakvu natuknicu uljez dobiva",
+hstyle:"Vrsta natuknice",hstyle_h:"Samo u kategorijama s +",
 hs_simple:"Laka",hs_niche:"Znalačka",hs_long:"Duga",hs_random:"Mix",
 mostyou:"većina je imala",allhad:"svi su imali",oddword:"druga riječ",oddone:"tko je imao drugu",
 vote_q_u:"Tko je imao drugu riječ?",
@@ -721,10 +728,15 @@ function paintNames(){
 
 function paintChips(){
   const box = $("#chips"); box.innerHTML = "";
-  const mk = (label, on, toggle)=>{
+  const mk = (label, on, toggle, plus)=>{
     const b=document.createElement("button");
     b.className="chip"+(on?" on":"");
-    b.textContent=label;
+    b.textContent=label;              /* set first - it wipes any children */
+    if(plus){
+      const s=document.createElement("span");
+      s.className="plus"; s.textContent="+";
+      b.appendChild(s);
+    }
     b.onclick=()=>{ toggle(); buzz(10); paintChips(); save(); };
     box.appendChild(b);
   };
@@ -733,11 +745,14 @@ function paintChips(){
      another language stays in S.cats and comes back when you switch back. */
   const avail = catsFor();
   const picked = S.cats.filter(k=>avail.some(c=>c.key===k));
-  mk(t("mix"), picked.length===0, ()=>{ S.cats = []; });
+  const marks = tiersVisible();
+  /* "All" only earns the plus once every category on offer has the tiers */
+  mk(t("mix"), picked.length===0, ()=>{ S.cats = []; },
+     marks && avail.length && avail.every(c=>hasTiers(c.key)));
   avail.forEach(c=>mk(c[S.lang], S.cats.indexOf(c.key)>=0, ()=>{
     const i = S.cats.indexOf(c.key);
     if(i>=0) S.cats.splice(i,1); else S.cats.push(c.key);
-  }));
+  }, marks && hasTiers(c.key)));
 }
 
 /* a category needs the right language, and in undercover it also needs
@@ -752,6 +767,16 @@ function catAvailable(c){
 }
 function catsFor(){ return CATS.filter(catAvailable); }
 function catLabel(key){ const c = CATS.find(x=>x.key===key); return c ? c[S.lang] : ""; }
+
+/* a category carries clue tiers only when every one of its entries has all
+   three - a half-upgraded list would promise styles it cannot deliver */
+function hasTiers(key){
+  const list = WORDS[S.lang] && WORDS[S.lang][key];
+  return !!(list && list.length && list.every(e => e.split("|").length === 4));
+}
+/* and the mark is only meaningful while a clue is actually being handed to
+   the imposter - undercover has no clues at all */
+function tiersVisible(){ return S.mode !== "undercover" && S.hintMode === "imposter"; }
 
 /* Croatian runs long - "Poljoprivrednik" would break across lines and read
    as two nonsense halves. Shrink to fit the longest single word instead. */

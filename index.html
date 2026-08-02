@@ -44,9 +44,10 @@
 /* undercover is not just a green accent on a purple app - the whole surface
    goes cold, so the two modes are told apart from across the table */
 :root[data-mode="undercover"]{
-  /* the surfaces stay exactly as classic - only the highlights change, so
-     the two modes share one room and differ in what is lit up in it */
+  /* same purple room, lit about ten percent lower - undercover should feel
+     like the lights were turned down, not like a different building */
   --accent:#6FB6D8;
+  --ink:#170E29;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{height:100%}
@@ -203,6 +204,12 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 /* the cover sits on top and slides with your finger; the face is always
    underneath, so how much you uncover is exactly how far you dragged */
 .card .back{z-index:2;will-change:transform}
+/* the glow dims with the room */
+:root[data-mode="undercover"] body::before{
+  background:
+    radial-gradient(120% 70% at 50% -10%, rgba(52,32,86,.9), transparent 60%),
+    radial-gradient(80% 50% at 50% 110%, rgba(202,152,53,.09), transparent 70%);
+}
 /* the mode is told apart by the card, not by the room. the back pattern
    leans the other way and takes the accent, the edge and the handle follow -
    all of it visible from across the table while the phone goes round. */
@@ -524,7 +531,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "4.5";
+const APP_VERSION = "4.6";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list

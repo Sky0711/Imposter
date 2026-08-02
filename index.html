@@ -296,6 +296,11 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   min-width:36px;text-align:center;flex:none;color:var(--bone);
 }
 .voterow .vcount.zero{color:rgba(244,236,224,.35)}
+/* the none-of-the-above row - green, because accusing nobody is the one
+   vote that is not an accusation */
+.voterow.none{border-color:rgba(53,192,142,.45);background:rgba(53,192,142,.10)}
+.voterow.none .n{color:var(--jade)}
+.voterow.none .vname{color:var(--jade)}
 .center{text-align:center}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -486,7 +491,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "3.5";
+const APP_VERSION = "3.6";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list
@@ -1045,14 +1050,22 @@ function paintVoteMeta(){
   $("#btn-vote-go").disabled = total !== S.players;
 }
 
+/* In undercover with a secret count, a round can have nobody odd or everybody
+   odd - and those look identical at the table, because every card matches.
+   Either way the honest answer is "no one was different", so the ballot needs
+   a way to say it. Seat 0 is that option; it only appears where it can be
+   right, so a fixed-count round never offers a trap. */
+function nobodyOption(){ return S.mode === "undercover" && S.imposters === -1; }
+
 function openVote(){
   S.votes = new Array(S.players+1).fill(0);
   const box = $("#vote-list"); box.innerHTML = "";
-  for(let n=1;n<=S.players;n++){
-    const row = document.createElement("div"); row.className = "voterow";
-    const num = document.createElement("div"); num.className = "n"; num.textContent = n;
+  const mkRow = n => {
+    const none = n === 0;
+    const row = document.createElement("div"); row.className = "voterow" + (none ? " none" : "");
+    const num = document.createElement("div"); num.className = "n"; num.textContent = none ? "–" : n;
     const nm = document.createElement("div"); nm.className = "vname";
-    nm.textContent = nameOf(n) || t("player")+" "+n;
+    nm.textContent = none ? t("noone") : (nameOf(n) || t("player")+" "+n);
     const minus = document.createElement("button"); minus.className = "vminus off"; minus.textContent = "−";
     const count = document.createElement("div"); count.className = "vcount zero"; count.textContent = "0";
     const paint = ()=>{
@@ -1068,7 +1081,9 @@ function openVote(){
     minus.onclick = e => { e.stopPropagation(); if(S.votes[n]>0){ S.votes[n]--; buzz(10); paint(); } };
     row.appendChild(num); row.appendChild(nm); row.appendChild(minus); row.appendChild(count);
     box.appendChild(row);
-  }
+  };
+  for(let n=1;n<=S.players;n++) mkRow(n);
+  if(nobodyOption()) mkRow(0);          /* last, as a none-of-the-above */
   paintVoteMeta();
   $("#vote-q").textContent = S.mode==="undercover" ? t("vote_q_u") : t("vote_q");
   show("s-vote");
@@ -1107,19 +1122,28 @@ function doReveal(){
     vb.style.display = "";
     const list = $("#rev-vote"); list.innerHTML = "";
     const votedSeats = [];
-    for(let n=1;n<=S.players;n++) if(S.votes[n]>0) votedSeats.push(n);
+    for(let n=0;n<=S.players;n++) if(S.votes[n]>0) votedSeats.push(n);
     votedSeats.sort((a,b)=> S.votes[b]-S.votes[a] || a-b);
     votedSeats.forEach(n=>{
+      /* a vote for "no one" was right exactly when no one was different */
+      const right = n === 0 ? allSame : S.impSet.has(n);
       const d = document.createElement("div");
-      d.className = "imp-pill " + (S.impSet.has(n) ? "hit" : "miss");
-      d.textContent = seatLabel(n) + " ×" + S.votes[n];
+      d.className = "imp-pill " + (right ? "hit" : "miss");
+      d.textContent = (n === 0 ? t("noone") : seatLabel(n)) + " ×" + S.votes[n];
       list.appendChild(d);
     });
     const top = Math.max.apply(null, S.votes);
     const accused = votedSeats.filter(n=>S.votes[n]===top);
-    const hits = accused.filter(n=>S.impSet.has(n)).length;
-    const exact = S.impSet.size > 0 && hits === S.impSet.size && accused.length === S.impSet.size;
-    const state = exact ? "caught" : hits > 0 ? "partial" : "missed";
+    let state;
+    if(allSame){
+      /* the whole table held the same word, so the only correct verdict is
+         accusing no one - and it has to win outright, not tie with a seat */
+      state = (accused.length === 1 && accused[0] === 0) ? "caught" : "missed";
+    } else {
+      const hits = accused.filter(n=>n>0 && S.impSet.has(n)).length;
+      const exact = S.impSet.size > 0 && hits === S.impSet.size && accused.length === S.impSet.size;
+      state = exact ? "caught" : hits > 0 ? "partial" : "missed";
+    }
     const v = $("#rev-verdict");
     v.className = "verdict " + state;
     v.textContent = t(state);

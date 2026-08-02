@@ -43,12 +43,7 @@
 }
 /* undercover is not just a green accent on a purple app - the whole surface
    goes cold, so the two modes are told apart from across the table */
-:root[data-mode="undercover"]{
-  /* same purple room, lit about twenty percent lower - undercover should
-     feel like the lights were turned down, not like a different building */
-  --accent:#6FB6D8;
-  --ink:#150C25;
-}
+:root[data-mode="undercover"]{--accent:var(--jade)}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{height:100%}
 body{
@@ -109,9 +104,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .backbtn:active{background:var(--velvet)}
 .btn:active{transform:scale(.975)}
 .btn.ghost{background:transparent;color:var(--bone);border:1.5px solid rgba(244,236,224,.22);font-weight:600}
-/* the primary action follows the mode, like every other accent */
-.btn.brass{background:var(--accent);color:#2A1A05}
-:root[data-mode="undercover"] .btn.brass{color:#06192B}
+.btn.brass{background:var(--brass);color:#2A1A05}
 .btn[disabled]{opacity:.35;pointer-events:none}
 .row{display:flex;gap:12px}
 .spacer{flex:1;min-height:16px}
@@ -170,7 +163,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 /* the row's own name carries the blue too, so the whole setting - label,
    buttons and the marks it points at - is one colour across the screen */
 #f-hstyle .label{color:var(--player)}
-#seg-mode button[data-mode="undercover"].on{background:var(--accent);color:#06192B}
+#seg-mode button[data-mode="undercover"].on{background:var(--jade);color:#06251A}
 #seg-hstyle button{color:var(--player)}
 #seg-hstyle button.on{background:var(--player);color:#0A1A33}
 .seg{display:flex;gap:4px;background:var(--velvet);border-radius:13px;padding:4px;flex:none}
@@ -204,29 +197,12 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 /* the cover sits on top and slides with your finger; the face is always
    underneath, so how much you uncover is exactly how far you dragged */
 .card .back{z-index:2;will-change:transform}
-/* the glow dims with the room */
+/* the light in the room changes with the mode, before any component does */
 :root[data-mode="undercover"] body::before{
   background:
-    radial-gradient(120% 70% at 50% -10%, rgba(46,28,77,.9), transparent 60%),
-    radial-gradient(80% 50% at 50% 110%, rgba(179,135,47,.08), transparent 70%);
+    radial-gradient(120% 70% at 50% -10%, rgba(40,62,84,.9), transparent 60%),
+    radial-gradient(80% 50% at 50% 110%, rgba(53,192,142,.13), transparent 70%);
 }
-/* the mode is told apart by the card, not by the room. the back pattern
-   leans the other way and takes the accent, the edge and the handle follow -
-   all of it visible from across the table while the phone goes round. */
-:root[data-mode="undercover"] .card .back{
-  background:
-    repeating-linear-gradient(45deg, rgba(111,182,216,.13) 0 9px, transparent 9px 18px),
-    linear-gradient(160deg,var(--velvet-2),var(--velvet));
-}
-:root[data-mode="undercover"] .card{
-  border-color:rgba(111,182,216,.40);
-  box-shadow:0 26px 60px -24px rgba(0,0,0,.85), 0 0 0 1px rgba(111,182,216,.16);
-}
-:root[data-mode="undercover"] .pull{
-  background:rgba(111,182,216,.18);
-  border-top-color:rgba(111,182,216,.45);
-}
-:root[data-mode="undercover"] .seat-name{color:var(--accent)}
 .card .front{z-index:1}
 .hint-line{
   font-size:17.5px;line-height:1.45;color:var(--dim-2);
@@ -531,7 +507,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "4.7";
+const APP_VERSION = "4.8";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list

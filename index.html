@@ -103,7 +103,10 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 }
 .backbtn:active{background:var(--velvet)}
 .btn:active{transform:scale(.975)}
-.btn.ghost{background:transparent;color:var(--bone);border:1.5px solid rgba(244,236,224,.22);font-weight:600}
+/* secondary, but still obviously a button - at 22% opacity and no fill it
+   read as a label, and people missed the way back to the settings */
+.btn.ghost{background:rgba(244,236,224,.07);color:var(--bone);border:1.5px solid rgba(244,236,224,.45);font-weight:700}
+.btn.ghost:active{background:rgba(244,236,224,.14)}
 .btn.brass{background:var(--brass);color:#2A1A05}
 .btn[disabled]{opacity:.35;pointer-events:none}
 .row{display:flex;gap:12px}
@@ -517,7 +520,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "5.0";
+const APP_VERSION = "5.1";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list

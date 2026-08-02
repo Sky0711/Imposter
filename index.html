@@ -326,18 +326,17 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .voterow .vcount.zero{color:rgba(244,236,224,.35)}
 /* skipping the vote is a real decision, so this is small, red and parked at
    the far end of the top bar - nowhere near the thumb going for Reveal */
+/* sits under the top bar rather than in it - clear of the notch and of the
+   back arrow, comfortably reachable, and still nowhere near the reveal bar */
+.skiprow{display:flex;justify-content:flex-end;margin-top:8px}
 .skipvote{
-  flex:none;width:64px;min-height:60px;
-  display:flex;align-items:center;justify-content:center;
-  border-radius:16px;
-  font-size:26px;font-weight:700;line-height:1;
+  padding:11px 17px;min-height:44px;border-radius:13px;
+  font-size:14.5px;font-weight:700;letter-spacing:.02em;
   color:var(--imp);
   background:rgba(255,107,126,.10);
   border:1.5px solid rgba(255,107,126,.45);
 }
 .skipvote:active{background:rgba(255,107,126,.24)}
-/* the reveal bar takes whatever is left, so it always reads as the main one */
-#s-vote .row > .btn{flex:1}
 /* the none-of-the-above row - green, because accusing nobody is the one
    vote that is not an accusation */
 .voterow.none{border-color:rgba(53,192,142,.45);background:rgba(53,192,142,.10)}
@@ -490,6 +489,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
       <button class="backbtn" id="btn-vote-back" aria-label="Back">‹</button>
       <div class="eyebrow" data-t="inplay">round in play</div>
     </div>
+    <div class="skiprow"><button class="skipvote" id="btn-vote-skip" data-t="skipvote">Skip vote</button></div>
     <div class="stage">
       <div class="kv">
         <div class="eyebrow" id="vote-q" data-t="vote_q">Who is the imposter?</div>
@@ -497,10 +497,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
       <div class="votes" id="vote-list"></div>
       <div class="eyebrow center"><span data-t="vote_note">Everyone votes once</span> · <span id="vote-count">0/0</span></div>
     </div>
-    <div class="row">
-      <button class="skipvote" id="btn-vote-skip" title="Skip vote">&#187;</button>
-      <button class="btn brass" id="btn-vote-go" disabled data-t="reveal">Reveal</button>
-    </div>
+    <button class="btn brass" id="btn-vote-go" disabled data-t="reveal">Reveal</button>
   </section>
 
   <!-- REVEAL -->
@@ -537,7 +534,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "5.5";
+const APP_VERSION = "5.6";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list
@@ -654,7 +651,7 @@ mode:"Način igre",mode_h:"Dva načina igre",m_classic:"Klasik",m_undercover:"Dr
 hstyle:"Vrsta natuknice",hstyle_h:"Samo u kategorijama s +",
 hs_simple:"Laka",hs_niche:"Znalačka",hs_long:"Duga",hs_random:"Mix",
 mostyou:"većina je imala",allhad:"svi su imali",oddword:"druga riječ",oddone:"tko je imao drugu",
-vote_q_u:"Tko je imao drugu riječ?",govote:"Glasanje",skipvote:"Preskoči",
+vote_q_u:"Tko je imao drugu riječ?",govote:"Glasanje",skipvote:"Preskoči glasanje",
 vote:"Glasanje",vote_h:"Optužite prije otkrivanja",vote_q:"Tko je uljez?",
 vote_note:"Svatko glasa jednom",thevote:"glasovi",
 caught:"Ulovljeni!",partial:"Napola točno",missed:"Izvukli su se!",
@@ -1134,9 +1131,6 @@ function openVote(){
   if(nobodyOption()) mkRow(0);          /* last, as a none-of-the-above */
   paintVoteMeta();
   $("#vote-q").textContent = S.mode==="undercover" ? t("vote_q_u") : t("vote_q");
-  /* the skip button is a symbol, so its name lives in the label */
-  $("#btn-vote-skip").setAttribute("aria-label", t("skipvote"));
-  $("#btn-vote-skip").title = t("skipvote");
   show("s-vote");
 }
 

@@ -469,7 +469,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "2.6";
+const APP_VERSION = "2.7";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list
@@ -531,7 +531,11 @@ animals:["Wolf|Dog","Crocodile|Alligator","Frog|Toad","Rabbit|Hare","Butterfly|M
 objects:["Fork|Spoon","Pen|Pencil","Cup|Glass","Umbrella|Parasol","Bag|Backpack","Broom|Mop","Candle|Lamp","Knife|Scissors","Rope|Chain","Hammer|Axe","Mirror|Window","Blanket|Towel","Soap|Shampoo","Key|Lock","Book|Newspaper","Bicycle|Motorcycle","Guitar|Violin","Chair|Sofa","Watch|Ring","Phone|Tablet"],
 places:["Cinema|Theatre","Library|Bookstore","Hospital|Pharmacy","Restaurant|Cafe","School|University","Zoo|Aquarium","Airport|Train station","Bakery|Butcher","Museum|Gallery","Forest|Park","Mountain|Hill","Lake|River","Beach|Pool","Bar|Nightclub","Gym|Stadium","Farm|Garden","Hotel|Hostel","Church|Monastery","Prison|Courthouse","Castle|Tower"],
 jobs:["Doctor|Nurse","Teacher|Professor","Chef|Baker","Police officer|Soldier","Lawyer|Judge","Barber|Hairdresser","Waiter|Bartender","Pilot|Flight attendant","Singer|Dancer","Actor|Comedian","Farmer|Gardener","Carpenter|Mason","Electrician|Plumber","Journalist|Writer","Firefighter|Lifeguard","Vet|Zookeeper","Mechanic|Driver","Scientist|Engineer","Painter|Photographer","Dentist|Surgeon"],
-sports:["Football|Handball","Basketball|Volleyball","Tennis|Badminton","Swimming|Diving","Boxing|Wrestling","Skiing|Snowboarding","Chess|Checkers","Judo|Karate","Baseball|Cricket","Surfing|Sailing","Marathon|Sprint","Rowing|Kayaking","Darts|Bowling","Water polo|Rugby","Climbing|Hiking","Cycling|Motocross","Gymnastics|Ballet","Hockey|Ice skating","Golf|Polo","Archery|Shooting"]
+sports:["Football|Handball","Basketball|Volleyball","Tennis|Badminton","Swimming|Diving","Boxing|Wrestling","Skiing|Snowboarding","Chess|Checkers","Judo|Karate","Baseball|Cricket","Surfing|Sailing","Marathon|Sprint","Rowing|Kayaking","Darts|Bowling","Water polo|Rugby","Climbing|Hiking","Cycling|Motocross","Gymnastics|Ballet","Hockey|Ice skating","Golf|Polo","Archery|Shooting"],
+music:["The Beatles|The Rolling Stones","Michael Jackson|Prince","Nirvana|Pearl Jam","Beyoncé|Rihanna","Britney Spears|Christina Aguilera","Metallica|Iron Maiden","Coldplay|U2","Lady Gaga|Madonna","Whitney Houston|Céline Dion","Eminem|50 Cent","Pink Floyd|Led Zeppelin","Shakira|Jennifer Lopez"],
+games:["Minecraft|Roblox","Fortnite|PUBG","Call of Duty|Battlefield","Super Mario|Sonic","Counter-Strike|Valorant","League of Legends|Dota 2","Mortal Kombat|Street Fighter","Tomb Raider|Uncharted","Pokémon|Digimon","Need for Speed|Gran Turismo","The Sims|Animal Crossing","GTA|Mafia"],
+series:["Friends|How I Met Your Mother","The Simpsons|Family Guy","Sherlock|House","Money Heist|Prison Break","CSI|NCIS","Grey's Anatomy|ER","Game of Thrones|Vikings","Breaking Bad|Narcos","The Office|Parks and Recreation","Sex and the City|Gossip Girl","The Crown|Bridgerton","SpongeBob|Tom and Jerry"],
+movies:["Star Wars|Star Trek","Titanic|Avatar","The Godfather|Goodfellas","Jaws|Jurassic Park","Harry Potter|The Lord of the Rings","Toy Story|Shrek","Rocky|Rambo","Gladiator|Braveheart","Ghostbusters|Men in Black","The Shining|The Exorcist"]
 },
 hr:{
 food:["Kava|Čaj","Palačinke|Vafli","Burger|Sendvič","Kečap|Senf","Torta|Pita","Juha|Gulaš","Riža|Tjestenina","Limun|Limeta","Med|Džem","Mlijeko|Vrhnje","Pivo|Vino","Viski|Rum","Kokice|Čips","Sladoled|Sorbet","Kruh|Tost","Maslac|Margarin","Krafna|Kroasan","Čokolada|Bombon","Lubenica|Dinja","Pizza|Lazanje"],
@@ -539,7 +543,10 @@ animals:["Vuk|Pas","Krokodil|Aligator","Žaba|Krastača","Kunić|Zec","Leptir|Mo
 objects:["Vilica|Žlica","Kemijska|Olovka","Šalica|Čaša","Kišobran|Suncobran","Torba|Ruksak","Metla|Krpa za pod","Svijeća|Svjetiljka","Nož|Škare","Uže|Lanac","Čekić|Sjekira","Ogledalo|Prozor","Deka|Ručnik","Sapun|Šampon","Ključ|Lokot","Knjiga|Novine","Bicikl|Motor","Gitara|Violina","Stolica|Kauč","Sat|Prsten","Mobitel|Tablet"],
 places:["Kino|Kazalište","Knjižnica|Knjižara","Bolnica|Ljekarna","Restoran|Kafić","Škola|Fakultet","Zoološki vrt|Akvarij","Aerodrom|Kolodvor","Pekara|Mesnica","Muzej|Galerija","Šuma|Park","Planina|Brdo","Jezero|Rijeka","Plaža|Bazen","Bar|Noćni klub","Teretana|Stadion","Farma|Vrt","Hotel|Hostel","Crkva|Samostan","Zatvor|Sud","Dvorac|Toranj"],
 jobs:["Liječnik|Medicinska sestra","Učitelj|Profesor","Kuhar|Pekar","Policajac|Vojnik","Odvjetnik|Sudac","Brijač|Frizer","Konobar|Barmen","Pilot|Stjuardesa","Pjevač|Plesač","Glumac|Komičar","Poljoprivrednik|Vrtlar","Stolar|Zidar","Električar|Vodoinstalater","Novinar|Pisac","Vatrogasac|Spasilac","Veterinar|Čuvar u zoo vrtu","Mehaničar|Vozač","Znanstvenik|Inženjer","Slikar|Fotograf","Zubar|Kirurg"],
-sports:["Nogomet|Rukomet","Košarka|Odbojka","Tenis|Badminton","Plivanje|Skokovi u vodu","Boks|Hrvanje","Skijanje|Snowboard","Šah|Dama","Judo|Karate","Bejzbol|Kriket","Surfanje|Jedrenje","Maraton|Sprint","Veslanje|Kajak","Pikado|Kuglanje","Vaterpolo|Ragbi","Penjanje|Planinarenje","Biciklizam|Motokros","Gimnastika|Balet","Hokej|Klizanje","Golf|Polo","Streličarstvo|Streljaštvo"]
+sports:["Nogomet|Rukomet","Košarka|Odbojka","Tenis|Badminton","Plivanje|Skokovi u vodu","Boks|Hrvanje","Skijanje|Snowboard","Šah|Dama","Judo|Karate","Bejzbol|Kriket","Surfanje|Jedrenje","Maraton|Sprint","Veslanje|Kajak","Pikado|Kuglanje","Vaterpolo|Ragbi","Penjanje|Planinarenje","Biciklizam|Motokros","Gimnastika|Balet","Hokej|Klizanje","Golf|Polo","Streličarstvo|Streljaštvo"],
+music:["The Beatles|The Rolling Stones","Michael Jackson|Prince","Nirvana|Pearl Jam","Beyoncé|Rihanna","Britney Spears|Christina Aguilera","Metallica|Iron Maiden","Coldplay|U2","Lady Gaga|Madonna","Whitney Houston|Céline Dion","Eminem|50 Cent","Pink Floyd|Led Zeppelin","Shakira|Jennifer Lopez"],
+games:["Minecraft|Roblox","Fortnite|PUBG","Call of Duty|Battlefield","Super Mario|Sonic","Counter-Strike|Valorant","League of Legends|Dota 2","Mortal Kombat|Street Fighter","Tomb Raider|Uncharted","Pokémon|Digimon","Need for Speed|Gran Turismo","The Sims|Animal Crossing","GTA|Mafia"],
+series:["Friends|How I Met Your Mother","The Simpsons|Family Guy","Sherlock|House","La Casa de Papel|Prison Break","CSI|NCIS","Grey's Anatomy|ER","Game of Thrones|Vikings","Breaking Bad|Narcos","The Office|Parks and Recreation","Sex and the City|Gossip Girl","The Crown|Bridgerton","Spužva Bob|Tom i Jerry"]
 }};
 
 /* ============ ui strings ============ */

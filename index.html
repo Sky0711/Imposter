@@ -30,6 +30,9 @@
   --player:#7AB0FF;   /* bright blue, 6.9:1 on the word card */
   --imp:#FF6B7E;      /* light red, 5.5:1 - as legible as --player, not --signal */
   --card:#241340;      /* every card - bone on this is 14.4:1 */
+  /* the mode's own colour. classic is brass, undercover goes green - set on
+     the root element so one switch retints the whole app at once. */
+  --accent:var(--brass);
   --dim:rgba(244,236,224,.72);
   --dim-2:rgba(244,236,224,.82);
   /* one family throughout; weight carries the hierarchy, not a second face */
@@ -37,6 +40,7 @@
   --display:var(--body);
   --mono:var(--body);
 }
+:root[data-mode="undercover"]{--accent:var(--jade)}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{height:100%}
 body{
@@ -55,6 +59,13 @@ body::before{
   background:
     radial-gradient(120% 70% at 50% -10%, rgba(58,35,96,.9), transparent 60%),
     radial-gradient(80% 50% at 50% 110%, rgba(224,169,59,.10), transparent 70%);
+  transition:background .35s ease;
+}
+/* the light in the room changes with the mode, before any component does */
+:root[data-mode="undercover"] body::before{
+  background:
+    radial-gradient(120% 70% at 50% -10%, rgba(40,62,84,.9), transparent 60%),
+    radial-gradient(80% 50% at 50% 110%, rgba(53,192,142,.13), transparent 70%);
 }
 #app{
   position:relative;z-index:1;
@@ -123,7 +134,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 }
 .stepper button:active{background:var(--velvet-2)}
 .stepper.locked button{opacity:.28;pointer-events:none}
-.stepper .val.rand{color:var(--brass)}
+.stepper .val.rand{color:var(--accent)}
 .stepper .val{
   font-family:var(--display);font-weight:800;font-size:23px;min-width:50px;text-align:center;
   line-height:1;
@@ -146,7 +157,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   min-height:48px;padding:12px 17px;border-radius:13px;font-size:15.5px;font-weight:600;
   background:var(--velvet);border:1.5px solid transparent;color:var(--dim-2);
 }
-.chip.on{background:transparent;border-color:var(--brass);color:var(--brass)}
+.chip.on{background:transparent;border-color:var(--accent);color:var(--accent)}
 /* the blue plus marks the categories that actually carry the three clue
    tiers. it wears the same blue as the clue style control, so the mark and
    the setting it refers to read as one thing. after .chip.on on purpose -
@@ -155,6 +166,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 /* the row's own name carries the blue too, so the whole setting - label,
    buttons and the marks it points at - is one colour across the screen */
 #f-hstyle .label{color:var(--player)}
+#seg-mode button[data-mode="undercover"].on{background:var(--jade);color:#06251A}
 #seg-hstyle button{color:var(--player)}
 #seg-hstyle button.on{background:var(--player);color:#0A1A33}
 .seg{display:flex;gap:4px;background:var(--velvet);border-radius:13px;padding:4px;flex:none}
@@ -199,7 +211,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
    the one holding the only red rectangle in the room. The role is in the
    words on the card, which you have to be holding it to read. */
 .card .front{background:linear-gradient(165deg,#2E1852,var(--card));color:var(--bone)}
-.seat-num{font-family:var(--display);font-weight:800;font-size:88px;line-height:.9;color:var(--brass);letter-spacing:-.03em}
+.seat-num{font-family:var(--display);font-weight:800;font-size:88px;line-height:.9;color:var(--accent);letter-spacing:-.03em}
 .seat-name{font-family:var(--display);font-weight:700;font-size:27px;line-height:1.15;letter-spacing:-.01em;word-break:break-word;max-width:100%}
 
 /* ---- name entry ---- */
@@ -207,7 +219,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .namerow{display:flex;align-items:center;gap:12px}
 .namerow .n{
   font-family:var(--display);font-weight:800;font-size:20px;line-height:1;width:30px;text-align:center;
-  color:var(--brass);flex:none;
+  color:var(--accent);flex:none;
 }
 .namerow input{
   flex:1;min-width:0;font:inherit;font-size:17px;font-weight:600;min-height:52px;
@@ -217,7 +229,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   -webkit-user-select:text;user-select:text;
 }
 .namerow input::placeholder{color:rgba(244,236,224,.52);font-weight:400}
-.namerow input:focus{border-color:var(--brass)}
+.namerow input:focus{border-color:var(--accent)}
 .backmid{display:flex;flex-direction:column;align-items:center;gap:12px}
 /* The handle sits at the foot of the cover: under your thumb when the card
    is shut, and it rides up with the cover so your thumb keeps holding the
@@ -253,7 +265,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .clock.low{color:var(--signal)}
 .kv{display:flex;flex-direction:column;align-items:center;gap:8px}
 .kv .v{font-family:var(--display);font-weight:700;font-size:25px;text-align:center;line-height:1.2}
-.big-word{font-family:var(--display);font-weight:800;font-size:clamp(38px,11vw,58px);line-height:1.05;letter-spacing:-.02em;color:var(--brass);overflow-wrap:break-word;text-align:center}
+.big-word{font-family:var(--display);font-weight:800;font-size:clamp(38px,11vw,58px);line-height:1.05;letter-spacing:-.02em;color:var(--accent);overflow-wrap:break-word;text-align:center}
 /* the odd word on an undercover reveal - same shape, quieter, and in the
    imposter red so the two words never read as equals */
 .big-word.twin{font-size:clamp(28px,8vw,42px);color:var(--imp)}
@@ -282,7 +294,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   cursor:pointer;
 }
 .voterow:active{background:var(--velvet-2)}
-.voterow .n{font-family:var(--display);font-weight:800;font-size:20px;width:34px;text-align:center;color:var(--brass);flex:none}
+.voterow .n{font-family:var(--display);font-weight:800;font-size:20px;width:34px;text-align:center;color:var(--accent);flex:none}
 .voterow .vname{flex:1;min-width:0;font-size:16.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}
 .voterow .vminus{
   width:44px;height:44px;border-radius:11px;flex:none;
@@ -491,7 +503,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "3.6";
+const APP_VERSION = "3.7";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list
@@ -681,6 +693,9 @@ function paintText(){
 
 function paintSetup(){
   clamp();
+  /* retints the whole app; the mode cannot change mid-round, so setting it
+     here carries through the deal, the vote and the reveal */
+  document.documentElement.dataset.mode = S.mode;
   $("#v-players").textContent = S.players;
   const rnd = S.imposters === -1;
   $("#v-imposters").textContent = rnd ? "?" : S.imposters;

@@ -144,8 +144,11 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;
   background:var(--dim);transition:transform .18s cubic-bezier(.3,1.4,.5,1), background .18s ease;
 }
-.switch.on{background:var(--jade)}
-.switch.on i{transform:translateX(24px);background:#0B2E22}
+/* a flipped switch wears the mode's colour: brass in classic, jade in
+   undercover. the knob darkens to whichever it is sitting on. */
+.switch.on{background:var(--accent)}
+.switch.on i{transform:translateX(24px);background:#2A1A05}
+:root[data-mode="undercover"] .switch.on i{background:#0B2E22}
 .switch:active{filter:brightness(1.25)}
 .chip:active,.seg button:active{transform:scale(.96)}
 
@@ -507,7 +510,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "4.8";
+const APP_VERSION = "4.9";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list

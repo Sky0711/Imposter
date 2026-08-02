@@ -152,6 +152,9 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
    the setting it refers to read as one thing. after .chip.on on purpose -
    the plus keeps its blue even while the chip is selected and gone gold. */
 .chip .plus{color:var(--player);font-weight:800;font-size:17px;margin-left:6px}
+/* the row's own name carries the blue too, so the whole setting - label,
+   buttons and the marks it points at - is one colour across the screen */
+#f-hstyle .label{color:var(--player)}
 #seg-hstyle button{color:var(--player)}
 #seg-hstyle button.on{background:var(--player);color:#0A1A33}
 .seg{display:flex;gap:4px;background:var(--velvet);border-radius:13px;padding:4px;flex:none}
@@ -483,7 +486,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "2.9";
+const APP_VERSION = "3.0";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list

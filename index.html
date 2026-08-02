@@ -259,7 +259,30 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .verdict.caught{color:var(--jade)}
 .verdict.partial{color:var(--brass)}
 .verdict.missed{color:var(--signal)}
-#vote-chips{justify-content:center;margin-top:0}
+/* the tally: one row per seat, the whole row is the +1 target and the
+   minus takes a slip back. counts sit on the right, out of thumb range. */
+.votes{display:flex;flex-direction:column;gap:8px;width:100%;max-width:420px}
+.voterow{
+  display:flex;align-items:center;gap:10px;min-height:56px;
+  padding:5px 8px 5px 2px;border-radius:13px;
+  background:var(--velvet);border:1px solid rgba(244,236,224,.12);
+  cursor:pointer;
+}
+.voterow:active{background:var(--velvet-2)}
+.voterow .n{font-family:var(--display);font-weight:800;font-size:20px;width:34px;text-align:center;color:var(--brass);flex:none}
+.voterow .vname{flex:1;min-width:0;font-size:16.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}
+.voterow .vminus{
+  width:44px;height:44px;border-radius:11px;flex:none;
+  background:rgba(244,236,224,.08);border:1px solid rgba(244,236,224,.14);
+  font-size:22px;line-height:1;color:var(--bone);
+  display:flex;align-items:center;justify-content:center;
+}
+.voterow .vminus.off{visibility:hidden}
+.voterow .vcount{
+  font-family:var(--display);font-weight:800;font-size:22px;
+  min-width:36px;text-align:center;flex:none;color:var(--bone);
+}
+.voterow .vcount.zero{color:rgba(244,236,224,.35)}
 .center{text-align:center}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -396,8 +419,8 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
       <div class="kv">
         <div class="eyebrow" data-t="vote_q">Who is the imposter?</div>
       </div>
-      <div class="chips" id="vote-chips"></div>
-      <div class="eyebrow center" data-t="vote_note">Pick one or more</div>
+      <div class="votes" id="vote-list"></div>
+      <div class="eyebrow center"><span data-t="vote_note">Everyone votes once</span> · <span id="vote-count">0/0</span></div>
     </div>
     <button class="btn brass" id="btn-vote-go" disabled data-t="reveal">Reveal</button>
   </section>
@@ -432,7 +455,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "2.3";
+const APP_VERSION = "2.4";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list
@@ -489,7 +512,7 @@ tagline:"Everyone gets the same secret word. Someone doesn't. Find out who.",
 start:"Start the round",noone:"Nobody",time:"Time",names:"Names",nameph:"Name (optional)",
 hintw:"Imposter sees clue",hintw_h:"One clue, only for them",everyone:"Everyone",
 vote:"Voting",vote_h:"Accuse before the reveal",vote_q:"Who is the imposter?",
-vote_note:"Pick one or more",thevote:"the vote",
+vote_note:"Everyone votes once",thevote:"the vote",
 caught:"Caught!",partial:"Half right",missed:"Got away!",
 tableline:"pass-and-play · {n} players"},
 hr:{players:"Igrači",players_h:"Ide u krug",imposters:"Uljezi",imposters_h:"Manje od trećine stola",
@@ -503,7 +526,7 @@ tagline:"Svi dobiju istu tajnu riječ. Netko ne. Otkrijte tko.",
 start:"Kreni s rundom",noone:"Nitko",time:"Vrijeme",names:"Imena",nameph:"Ime (nije obavezno)",
 hintw:"Uljez vidi natuknicu",hintw_h:"Jedna natuknica po riječi",everyone:"Svi",
 vote:"Glasanje",vote_h:"Optužite prije otkrivanja",vote_q:"Tko je uljez?",
-vote_note:"Označi jednog ili više",thevote:"glasovi",
+vote_note:"Svatko glasa jednom",thevote:"glasovi",
 caught:"Ulovljeni!",partial:"Napola točno",missed:"Izvukli su se!",
 tableline:"igra u krug · {n} igrača"}
 };
@@ -511,7 +534,7 @@ tableline:"igra u krug · {n} igrača"}
 /* ============ state ============ */
 /* cats: which categories are in play. empty means all of them. */
 const S = {players:4, imposters:1, minutes:4, hintCat:true, hintMode:"imposter", vote:true, lang:"hr", cats:[], names:[],
-           word:"", clue:"", catKey:"", impSet:new Set(), voted:null, seat:1, first:1, left:0, timer:null, running:false};
+           word:"", clue:"", catKey:"", impSet:new Set(), votes:null, seat:1, first:1, left:0, timer:null, running:false};
 
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
@@ -685,7 +708,7 @@ function deal(){
   S.impSet = new Set(seats.slice(0, count));
   S.first = 1+Math.floor(Math.random()*S.players);
 
-  S.voted = null;   /* last round's ballot must not leak onto this reveal */
+  S.votes = null;   /* last round's tally must not leak onto this reveal */
   S.seat = 1;
   paintSeat();
   show("s-deal");
@@ -863,24 +886,43 @@ $("#btn-pause").onclick = ()=>{
 };
 
 /* ============ vote & reveal ============ */
-/* one collective ballot: the table argues, then marks one or more seats.
-   the picker is the same whatever the imposter mode, so the number of
-   chips you may tick never gives the real count away. */
+/* open voting, one round of it: every player has exactly one +1 to give,
+   tallied on a public board laid out like the names list. the row is the
+   target, the minus takes a slip back, and the urn holds exactly as many
+   votes as there are players - reveal unlocks when the last one is in. */
+function totalVotes(){ return S.votes ? S.votes.reduce((a,b)=>a+b,0) : 0; }
+
+function paintVoteMeta(){
+  const total = totalVotes();
+  $("#vote-count").textContent = total + "/" + S.players;
+  $("#btn-vote-go").disabled = total !== S.players;
+}
+
 function openVote(){
-  S.voted = new Set();
-  const box = $("#vote-chips"); box.innerHTML = "";
+  S.votes = new Array(S.players+1).fill(0);
+  const box = $("#vote-list"); box.innerHTML = "";
   for(let n=1;n<=S.players;n++){
-    const b = document.createElement("button");
-    b.className = "chip"; b.textContent = seatLabel(n);
-    b.onclick = ()=>{
-      if(S.voted.has(n)) S.voted.delete(n); else S.voted.add(n);
-      b.classList.toggle("on", S.voted.has(n));
-      $("#btn-vote-go").disabled = S.voted.size === 0;
-      buzz(10);
+    const row = document.createElement("div"); row.className = "voterow";
+    const num = document.createElement("div"); num.className = "n"; num.textContent = n;
+    const nm = document.createElement("div"); nm.className = "vname";
+    nm.textContent = nameOf(n) || t("player")+" "+n;
+    const minus = document.createElement("button"); minus.className = "vminus off"; minus.textContent = "−";
+    const count = document.createElement("div"); count.className = "vcount zero"; count.textContent = "0";
+    const paint = ()=>{
+      count.textContent = S.votes[n];
+      count.classList.toggle("zero", S.votes[n]===0);
+      minus.classList.toggle("off", S.votes[n]===0);
+      paintVoteMeta();
     };
-    box.appendChild(b);
+    row.onclick = ()=>{
+      if(totalVotes() >= S.players){ buzz([40,60,40]); return; }   /* urn is full */
+      S.votes[n]++; buzz(10); paint();
+    };
+    minus.onclick = e => { e.stopPropagation(); if(S.votes[n]>0){ S.votes[n]--; buzz(10); paint(); } };
+    row.appendChild(num); row.appendChild(nm); row.appendChild(minus); row.appendChild(count);
+    box.appendChild(row);
   }
-  $("#btn-vote-go").disabled = true;
+  paintVoteMeta();
   show("s-vote");
 }
 
@@ -897,20 +939,26 @@ function doReveal(){
   if(S.impSet.size === 0) pill(t("noone"), "none");
   else if(S.impSet.size === S.players) pill(t("everyone"), "all");
   else Array.from(S.impSet).sort((a,b)=>a-b).forEach(n=>pill(seatLabel(n)));
-  /* the ballot, seat by seat; caught means the exact set, no innocents */
+  /* the tally: every voted seat with its count, green where votes landed
+     on a real imposter. the accused are the top count - all of them on a
+     tie - and the verdict is judged on the accused alone. */
   const vb = $("#rev-vote-box");
-  if(S.voted && S.voted.size){
+  if(totalVotes() > 0){
     vb.style.display = "";
     const list = $("#rev-vote"); list.innerHTML = "";
-    let hits = 0;
-    Array.from(S.voted).sort((a,b)=>a-b).forEach(n=>{
-      const ok = S.impSet.has(n); if(ok) hits++;
+    const votedSeats = [];
+    for(let n=1;n<=S.players;n++) if(S.votes[n]>0) votedSeats.push(n);
+    votedSeats.sort((a,b)=> S.votes[b]-S.votes[a] || a-b);
+    votedSeats.forEach(n=>{
       const d = document.createElement("div");
-      d.className = "imp-pill " + (ok ? "hit" : "miss");
-      d.textContent = seatLabel(n);
+      d.className = "imp-pill " + (S.impSet.has(n) ? "hit" : "miss");
+      d.textContent = seatLabel(n) + " ×" + S.votes[n];
       list.appendChild(d);
     });
-    const exact = S.impSet.size > 0 && hits === S.impSet.size && S.voted.size === S.impSet.size;
+    const top = Math.max.apply(null, S.votes);
+    const accused = votedSeats.filter(n=>S.votes[n]===top);
+    const hits = accused.filter(n=>S.impSet.has(n)).length;
+    const exact = S.impSet.size > 0 && hits === S.impSet.size && accused.length === S.impSet.size;
     const state = exact ? "caught" : hits > 0 ? "partial" : "missed";
     const v = $("#rev-verdict");
     v.className = "verdict " + state;
@@ -929,7 +977,7 @@ onTap($("#btn-reveal"), ()=>{
   S.running = false;
   if(S.vote) openVote(); else doReveal();
 });
-onTap($("#btn-vote-go"), ()=>{ if(S.voted && S.voted.size) doReveal(); });
+onTap($("#btn-vote-go"), ()=>{ if(totalVotes() === S.players) doReveal(); });
 /* stepped out of the ballot: back to the round, clock held where it was */
 onTap($("#btn-vote-back"), ()=>{
   $("#btn-pause").textContent = t("resume");

@@ -30,6 +30,7 @@
   --player:#7AB0FF;   /* bright blue, 6.9:1 on the word card */
   --imp:#FF6B7E;      /* light red, 5.5:1 - as legible as --player, not --signal */
   --card:#241340;      /* every card - bone on this is 14.4:1 */
+  --card-top:#2E1852;  /* the lit corner of the card face */
   /* the mode's own colour. classic is brass, undercover goes green - set on
      the root element so one switch retints the whole app at once. */
   --accent:var(--brass);
@@ -40,7 +41,16 @@
   --display:var(--body);
   --mono:var(--body);
 }
-:root[data-mode="undercover"]{--accent:var(--jade)}
+/* undercover is not just a green accent on a purple app - the whole surface
+   goes cold, so the two modes are told apart from across the table */
+:root[data-mode="undercover"]{
+  --accent:var(--jade);
+  --ink:#0E2029;
+  --velvet:#17323E;
+  --velvet-2:#204656;
+  --card:#14343F;
+  --card-top:#1B4A5C;
+}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{height:100%}
 body{
@@ -64,8 +74,8 @@ body::before{
 /* the light in the room changes with the mode, before any component does */
 :root[data-mode="undercover"] body::before{
   background:
-    radial-gradient(120% 70% at 50% -10%, rgba(40,62,84,.9), transparent 60%),
-    radial-gradient(80% 50% at 50% 110%, rgba(53,192,142,.13), transparent 70%);
+    radial-gradient(120% 70% at 50% -10%, rgba(32,70,86,.95), transparent 60%),
+    radial-gradient(80% 50% at 50% 110%, rgba(53,192,142,.20), transparent 70%);
 }
 #app{
   position:relative;z-index:1;
@@ -210,7 +220,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
    readable across the table - the one person who must not be spotted was
    the one holding the only red rectangle in the room. The role is in the
    words on the card, which you have to be holding it to read. */
-.card .front{background:linear-gradient(165deg,#2E1852,var(--card));color:var(--bone)}
+.card .front{background:linear-gradient(165deg,var(--card-top),var(--card));color:var(--bone)}
 .seat-num{font-family:var(--display);font-weight:800;font-size:88px;line-height:.9;color:var(--accent);letter-spacing:-.03em}
 .seat-name{font-family:var(--display);font-weight:700;font-size:27px;line-height:1.15;letter-spacing:-.01em;word-break:break-word;max-width:100%}
 
@@ -503,7 +513,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "3.7";
+const APP_VERSION = "3.8";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list
@@ -694,8 +704,11 @@ function paintText(){
 function paintSetup(){
   clamp();
   /* retints the whole app; the mode cannot change mid-round, so setting it
-     here carries through the deal, the vote and the reveal */
+     here carries through the deal, the vote and the reveal. the browser
+     chrome follows too, so an installed app changes colour with the mode. */
   document.documentElement.dataset.mode = S.mode;
+  const tc = document.querySelector('meta[name="theme-color"]');
+  if(tc) tc.setAttribute("content", S.mode === "undercover" ? "#0E2029" : "#1A0F2E");
   $("#v-players").textContent = S.players;
   const rnd = S.imposters === -1;
   $("#v-imposters").textContent = rnd ? "?" : S.imposters;

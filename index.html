@@ -44,13 +44,14 @@
 /* undercover is not just a green accent on a purple app - the whole surface
    goes cold, so the two modes are told apart from across the table */
 :root[data-mode="undercover"]{
-  /* teal rather than a true green - the mode should read cold, not minty */
-  --accent:#4FC3B0;
-  --ink:#0E2029;
-  --velvet:#17323E;
-  --velvet-2:#204656;
-  --card:#14343F;
-  --card-top:#1B4A5C;
+  /* blue-slate, with the green taken out entirely - the mode should read
+     cold and a bit clinical, not minty */
+  --accent:#6FB6D8;
+  --ink:#101B27;
+  --velvet:#1B2A3A;
+  --velvet-2:#25394E;
+  --card:#182A3B;
+  --card-top:#203B54;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{height:100%}
@@ -75,8 +76,8 @@ body::before{
 /* the light in the room changes with the mode, before any component does */
 :root[data-mode="undercover"] body::before{
   background:
-    radial-gradient(120% 70% at 50% -10%, rgba(32,66,84,.95), transparent 60%),
-    radial-gradient(80% 50% at 50% 110%, rgba(79,195,176,.11), transparent 70%);
+    radial-gradient(120% 70% at 50% -10%, rgba(34,58,82,.95), transparent 60%),
+    radial-gradient(80% 50% at 50% 110%, rgba(111,182,216,.10), transparent 70%);
 }
 #app{
   position:relative;z-index:1;
@@ -120,7 +121,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .btn.ghost{background:transparent;color:var(--bone);border:1.5px solid rgba(244,236,224,.22);font-weight:600}
 /* the primary action follows the mode, like every other accent */
 .btn.brass{background:var(--accent);color:#2A1A05}
-:root[data-mode="undercover"] .btn.brass{color:#06251A}
+:root[data-mode="undercover"] .btn.brass{color:#06192B}
 .btn[disabled]{opacity:.35;pointer-events:none}
 .row{display:flex;gap:12px}
 .spacer{flex:1;min-height:16px}
@@ -179,7 +180,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 /* the row's own name carries the blue too, so the whole setting - label,
    buttons and the marks it points at - is one colour across the screen */
 #f-hstyle .label{color:var(--player)}
-#seg-mode button[data-mode="undercover"].on{background:var(--accent);color:#06251A}
+#seg-mode button[data-mode="undercover"].on{background:var(--accent);color:#06192B}
 #seg-hstyle button{color:var(--player)}
 #seg-hstyle button.on{background:var(--player);color:#0A1A33}
 .seg{display:flex;gap:4px;background:var(--velvet);border-radius:13px;padding:4px;flex:none}
@@ -517,7 +518,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "4.2";
+const APP_VERSION = "4.3";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list
@@ -717,7 +718,7 @@ function paintSetup(){
      chrome follows too, so an installed app changes colour with the mode. */
   document.documentElement.dataset.mode = S.mode;
   const tc = document.querySelector('meta[name="theme-color"]');
-  if(tc) tc.setAttribute("content", S.mode === "undercover" ? "#0E2029" : "#1A0F2E");
+  if(tc) tc.setAttribute("content", S.mode === "undercover" ? "#101B27" : "#1A0F2E");
   $("#v-players").textContent = S.players;
   const rnd = S.rand;
   $("#v-imposters").textContent = rnd ? "≤" + S.imposters : S.imposters;

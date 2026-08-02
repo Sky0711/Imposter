@@ -44,7 +44,8 @@
 /* undercover is not just a green accent on a purple app - the whole surface
    goes cold, so the two modes are told apart from across the table */
 :root[data-mode="undercover"]{
-  --accent:var(--jade);
+  /* teal rather than a true green - the mode should read cold, not minty */
+  --accent:#4FC3B0;
   --ink:#0E2029;
   --velvet:#17323E;
   --velvet-2:#204656;
@@ -74,8 +75,8 @@ body::before{
 /* the light in the room changes with the mode, before any component does */
 :root[data-mode="undercover"] body::before{
   background:
-    radial-gradient(120% 70% at 50% -10%, rgba(32,70,86,.95), transparent 60%),
-    radial-gradient(80% 50% at 50% 110%, rgba(53,192,142,.20), transparent 70%);
+    radial-gradient(120% 70% at 50% -10%, rgba(32,66,84,.95), transparent 60%),
+    radial-gradient(80% 50% at 50% 110%, rgba(79,195,176,.11), transparent 70%);
 }
 #app{
   position:relative;z-index:1;
@@ -178,7 +179,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 /* the row's own name carries the blue too, so the whole setting - label,
    buttons and the marks it points at - is one colour across the screen */
 #f-hstyle .label{color:var(--player)}
-#seg-mode button[data-mode="undercover"].on{background:var(--jade);color:#06251A}
+#seg-mode button[data-mode="undercover"].on{background:var(--accent);color:#06251A}
 #seg-hstyle button{color:var(--player)}
 #seg-hstyle button.on{background:var(--player);color:#0A1A33}
 .seg{display:flex;gap:4px;background:var(--velvet);border-radius:13px;padding:4px;flex:none}
@@ -516,7 +517,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "3.9";
+const APP_VERSION = "4.0";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list

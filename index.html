@@ -203,6 +203,23 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 /* the cover sits on top and slides with your finger; the face is always
    underneath, so how much you uncover is exactly how far you dragged */
 .card .back{z-index:2;will-change:transform}
+/* the mode is told apart by the card, not by the room. the back pattern
+   leans the other way and takes the accent, the edge and the handle follow -
+   all of it visible from across the table while the phone goes round. */
+:root[data-mode="undercover"] .card .back{
+  background:
+    repeating-linear-gradient(45deg, rgba(111,182,216,.13) 0 9px, transparent 9px 18px),
+    linear-gradient(160deg,var(--velvet-2),var(--velvet));
+}
+:root[data-mode="undercover"] .card{
+  border-color:rgba(111,182,216,.40);
+  box-shadow:0 26px 60px -24px rgba(0,0,0,.85), 0 0 0 1px rgba(111,182,216,.16);
+}
+:root[data-mode="undercover"] .pull{
+  background:rgba(111,182,216,.18);
+  border-top-color:rgba(111,182,216,.45);
+}
+:root[data-mode="undercover"] .seat-name{color:var(--accent)}
 .card .front{z-index:1}
 .hint-line{
   font-size:17.5px;line-height:1.45;color:var(--dim-2);
@@ -507,7 +524,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "4.4";
+const APP_VERSION = "4.5";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list

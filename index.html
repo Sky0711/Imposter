@@ -44,14 +44,9 @@
 /* undercover is not just a green accent on a purple app - the whole surface
    goes cold, so the two modes are told apart from across the table */
 :root[data-mode="undercover"]{
-  /* blue-slate, with the green taken out entirely - the mode should read
-     cold and a bit clinical, not minty */
+  /* the surfaces stay exactly as classic - only the highlights change, so
+     the two modes share one room and differ in what is lit up in it */
   --accent:#6FB6D8;
-  --ink:#101B27;
-  --velvet:#1B2A3A;
-  --velvet-2:#25394E;
-  --card:#182A3B;
-  --card-top:#203B54;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{height:100%}
@@ -72,12 +67,6 @@ body::before{
     radial-gradient(120% 70% at 50% -10%, rgba(58,35,96,.9), transparent 60%),
     radial-gradient(80% 50% at 50% 110%, rgba(224,169,59,.10), transparent 70%);
   transition:background .35s ease;
-}
-/* the light in the room changes with the mode, before any component does */
-:root[data-mode="undercover"] body::before{
-  background:
-    radial-gradient(120% 70% at 50% -10%, rgba(34,58,82,.95), transparent 60%),
-    radial-gradient(80% 50% at 50% 110%, rgba(111,182,216,.10), transparent 70%);
 }
 #app{
   position:relative;z-index:1;
@@ -518,7 +507,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "4.3";
+const APP_VERSION = "4.4";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list
@@ -713,12 +702,9 @@ function paintText(){
 
 function paintSetup(){
   clamp();
-  /* retints the whole app; the mode cannot change mid-round, so setting it
-     here carries through the deal, the vote and the reveal. the browser
-     chrome follows too, so an installed app changes colour with the mode. */
+  /* the mode cannot change mid-round, so setting it here carries through
+     the deal, the vote and the reveal */
   document.documentElement.dataset.mode = S.mode;
-  const tc = document.querySelector('meta[name="theme-color"]');
-  if(tc) tc.setAttribute("content", S.mode === "undercover" ? "#101B27" : "#1A0F2E");
   $("#v-players").textContent = S.players;
   const rnd = S.rand;
   $("#v-imposters").textContent = rnd ? "≤" + S.imposters : S.imposters;

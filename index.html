@@ -127,6 +127,18 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .field > :first-child{flex:1 1 165px;min-width:0}
 .field > :last-child{margin-left:auto}
 .field .label{font-size:16px;font-weight:600;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+/* The three sides wear their colours from the settings screen on, so the
+   card is not the first place you have to learn them: blue is the players
+   and what they know, red is the imposter, black is the blackmail. Black
+   has to be a field rather than ink here for the same reason it is one on
+   the card - black type on this background would simply be a hole. */
+.tint-player{color:var(--player)}
+.tint-imp{color:var(--imp)}
+.tint-bm{
+  background:var(--noir);color:var(--bone);
+  border:1px solid rgba(244,236,224,.22);
+  padding:3px 10px;border-radius:8px;
+}
 .field .hint{font-size:13.5px;color:var(--dim);margin-top:4px;line-height:1.4}
 .stepper{display:flex;align-items:center;gap:6px;flex:none}
 .stepper button{
@@ -444,7 +456,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
     </div>
 
     <div class="field">
-      <div><div class="label" data-t="players">Players</div><div class="hint" data-t="players_h">Phone goes around the table</div></div>
+      <div><div class="label tint-player" data-t="players">Players</div><div class="hint" data-t="players_h">Phone goes around the table</div></div>
       <div class="stepper" data-step="players">
         <button data-d="-1" aria-label="fewer">−</button><div class="val" id="v-players">4</div><button data-d="1" aria-label="more">+</button>
       </div>
@@ -452,7 +464,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
     <div class="field">
       <div>
-        <div class="label"><span data-t="imposters">Imposters</span><button class="diebtn" id="d-imposters" data-rnd="randImp"><svg class="die" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.6" y="2.6" width="18.8" height="18.8" rx="5.2" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="8.4" cy="8.4" r="2.2"/><circle cx="12" cy="12" r="2.2"/><circle cx="15.6" cy="15.6" r="2.2"/></svg></button></div>
+        <div class="label"><span class="tint-imp" data-t="imposters">Imposters</span><button class="diebtn" id="d-imposters" data-rnd="randImp"><svg class="die" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.6" y="2.6" width="18.8" height="18.8" rx="5.2" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="8.4" cy="8.4" r="2.2"/><circle cx="12" cy="12" r="2.2"/><circle cx="15.6" cy="15.6" r="2.2"/></svg></button></div>
         <div class="hint" id="h-imposters" data-t="imposters_h">Pretends to know the word</div>
       </div>
       <div class="stepper" data-step="imposters" id="st-imposters">
@@ -462,7 +474,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
     <div class="field" id="f-blackmail">
       <div>
-        <div class="label"><span data-t="bm">Blackmailed</span><button class="eyebtn on" id="e-blackmail" aria-label="imposter sees blackmail"><svg class="eye" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 6.2 12 6.2 21.5 12 21.5 12 18 17.8 12 17.8 2.5 12 2.5 12z" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="2.6"/><line class="slash" x1="4.4" y1="19.6" x2="19.6" y2="4.4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg></button><button class="diebtn" id="d-blackmail" data-rnd="randBm"><svg class="die" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.6" y="2.6" width="18.8" height="18.8" rx="5.2" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="8.4" cy="8.4" r="2.2"/><circle cx="12" cy="12" r="2.2"/><circle cx="15.6" cy="15.6" r="2.2"/></svg></button></div>
+        <div class="label"><span class="tint-bm" data-t="bm">Blackmailed</span><button class="eyebtn on" id="e-blackmail" aria-label="imposter sees blackmail"><svg class="eye" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 6.2 12 6.2 21.5 12 21.5 12 18 17.8 12 17.8 2.5 12 2.5 12z" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="2.6"/><line class="slash" x1="4.4" y1="19.6" x2="19.6" y2="4.4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg></button><button class="diebtn" id="d-blackmail" data-rnd="randBm"><svg class="die" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.6" y="2.6" width="18.8" height="18.8" rx="5.2" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="8.4" cy="8.4" r="2.2"/><circle cx="12" cy="12" r="2.2"/><circle cx="15.6" cy="15.6" r="2.2"/></svg></button></div>
         <div class="hint" id="h-blackmail" data-t="bm_h">Honest, but must smuggle a word in</div>
       </div>
       <div class="stepper" data-step="blackmail">
@@ -630,7 +642,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "6.5";
+const APP_VERSION = "6.6";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list

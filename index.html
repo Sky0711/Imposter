@@ -275,6 +275,18 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 /* the role is red again - but as a line of text, not a field of colour.
    a few letters cannot be read from across the table; a red card could. */
 .front .badge.imp{background:rgba(255,107,126,.13);border-color:var(--imp);color:var(--imp)}
+/* the blackmailed are honest, so their badge takes the mode's own colour
+   rather than the imposter's red - it is a job, not a side */
+.front .badge.bm{background:rgba(224,169,59,.14);border-color:var(--accent);color:var(--accent)}
+:root[data-mode="undercover"] .front .badge.bm{background:rgba(53,192,142,.14)}
+/* the assignment: quiet label, loud word. the word is the whole instruction,
+   so it carries the weight and the label just introduces it. */
+.task{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:2px;max-width:26ch}
+.task span{font-size:15px;line-height:1.4;color:var(--dim-2)}
+.task b{
+  font-family:var(--display);font-weight:800;font-size:clamp(23px,6.4vw,31px);line-height:1.05;
+  letter-spacing:-.01em;color:var(--accent);text-transform:uppercase;overflow-wrap:break-word;
+}
 
 /* ---- play ---- */
 .clock{font-family:var(--display);font-weight:800;font-size:clamp(64px,21vw,104px);line-height:.95;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
@@ -296,6 +308,12 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
    it was not - the red imposter pills above stay the loudest thing */
 .imp-pill.hit{background:#0E7A57;color:#EAFBF4}
 .imp-pill.miss{background:var(--velvet);color:var(--dim)}
+/* outlined, not filled - the blackmailed were on the table's side all along,
+   so their row must not read as another list of culprits */
+.imp-pill.bm{
+  background:transparent;border:1.5px solid var(--accent);color:var(--accent);
+  font-size:18px;padding:9.5px 16px;
+}
 .verdict{font-family:var(--display);font-weight:800;font-size:22px;text-align:center}
 .verdict.caught{color:var(--jade)}
 .verdict.partial{color:var(--brass)}
@@ -381,6 +399,13 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
       </div>
     </div>
 
+    <div class="field" id="f-blackmail">
+      <div><div class="label" data-t="bm">Blackmailed</div><div class="hint" data-t="bm_h">Honest, but must smuggle a word in</div></div>
+      <div class="stepper" data-step="blackmail">
+        <button data-d="-1" aria-label="fewer">−</button><div class="val" id="v-blackmail">0</div><button data-d="1" aria-label="more">+</button>
+      </div>
+    </div>
+
     <div class="field">
       <div><div class="label" data-t="rand">Random count</div><div class="hint" data-t="rand_h">Up to that many. Could be none.</div></div>
       <div class="switch" id="sw-rand"><i></i></div>
@@ -455,6 +480,9 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
           <div class="word" id="front-word">—</div>
           <div class="cat-tag" id="front-cat"></div>
           <div class="hint-line" id="front-hint"></div>
+          <div class="task" id="front-task" style="display:none">
+            <span id="task-label"></span><b id="task-word"></b>
+          </div>
         </div>
       </div>
       <div class="eyebrow center" id="deal-note" data-t="note_peek">Nobody else looks.</div>
@@ -514,6 +542,10 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
         <div class="eyebrow" id="rev-imp-label" data-t="theimposter">the imposter</div>
         <div class="imp-list" id="rev-imps"></div>
       </div>
+      <div class="kv" id="rev-bm-box" style="display:none">
+        <div class="eyebrow" data-t="thebm">blackmailed</div>
+        <div class="imp-list" id="rev-bm"></div>
+      </div>
       <div class="kv" id="rev-vote-box" style="display:none">
         <div class="eyebrow" data-t="thevote">the vote</div>
         <div class="imp-list" id="rev-vote"></div>
@@ -534,7 +566,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "5.6";
+const APP_VERSION = "5.7";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list
@@ -636,6 +668,9 @@ vote_q_u:"Who had a different word?",govote:"Vote",skipvote:"Skip vote",
 vote:"Voting",vote_h:"Accuse before the reveal",vote_q:"Who is the imposter?",
 vote_note:"Everyone votes once",thevote:"the vote",
 caught:"Caught!",partial:"Half right",missed:"Got away!",
+bm:"Blackmailed",bm_h:"Honest, but must smuggle a word in",bm_badge:"Blackmail",
+bm_you:"Say this word during the round:",bm_imp:"Someone at the table must say:",
+thebm:"blackmailed",
 tableline:"pass-and-play · {n} players"},
 hr:{players:"Igrači",players_h:"Ide u krug",imposters:"Uljezi",imposters_h:"Manje od trećine stola",
 timer:"Vrijeme runde",timer_h:"Minute. 0 = bez timera",hint:"Prikaži kategoriju",hint_h:"Svima ili nikome",
@@ -655,13 +690,19 @@ vote_q_u:"Tko je imao drugu riječ?",govote:"Glasanje",skipvote:"Preskoči glasa
 vote:"Glasanje",vote_h:"Optužite prije otkrivanja",vote_q:"Tko je uljez?",
 vote_note:"Svatko glasa jednom",thevote:"glasovi",
 caught:"Ulovljeni!",partial:"Napola točno",missed:"Izvukli su se!",
+/* the badge is the noun, not the adjective - "ucijenjen/ucijenjena" would
+   put a gender on whoever happens to be holding the phone */
+bm:"Ucijenjeni",bm_h:"Pošten je, ali mora ubaciti riječ",bm_badge:"Ucjena",
+bm_you:"Moraš reći ovu riječ u rundi:",bm_imp:"Netko za stolom mora reći:",
+thebm:"ucijenjeni",
 tableline:"igra u krug · {n} igrača"}
 };
 
 /* ============ state ============ */
 /* cats: which categories are in play. empty means all of them. */
-const S = {players:4, imposters:1, rand:false, minutes:4, hintCat:true, hintMode:"imposter", hintStyle:"simple", vote:true, mode:"classic", lang:"hr", cats:[], names:[],
-           word:"", twin:"", clue:"", catKey:"", impSet:new Set(), votes:null, seat:1, first:1, left:0, timer:null, running:false};
+const S = {players:4, imposters:1, blackmail:0, rand:false, minutes:4, hintCat:true, hintMode:"imposter", hintStyle:"simple", vote:true, mode:"classic", lang:"hr", cats:[], names:[],
+           word:"", twin:"", clue:"", catKey:"", impSet:new Set(), bmSet:new Set(), bmWords:{},
+           votes:null, seat:1, first:1, left:0, timer:null, running:false};
 
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
@@ -677,7 +718,7 @@ const SAVE_KEY = "imposter.setup.v1";
 function save(){
   try{
     localStorage.setItem(SAVE_KEY, JSON.stringify({
-      players:S.players, imposters:S.imposters, rand:S.rand, minutes:S.minutes,
+      players:S.players, imposters:S.imposters, blackmail:S.blackmail, rand:S.rand, minutes:S.minutes,
       hintCat:S.hintCat, hintMode:S.hintMode, hintStyle:S.hintStyle, vote:S.vote, mode:S.mode, lang:S.lang, cats:S.cats,
       names:S.names.slice(0,16)
     }));
@@ -694,6 +735,7 @@ function load(){
     /* pre-4.2 saves used -1 to mean "secret count"; it now means "up to 1" */
     if(num(d.imposters)) S.imposters = d.imposters === -1 ? 1 : d.imposters;
     if(d.imposters === -1) S.rand = true;
+    if(num(d.blackmail)) S.blackmail = d.blackmail;
     if(typeof d.rand === "boolean") S.rand = d.rand;
     if(num(d.minutes))   S.minutes   = d.minutes;
     if(typeof d.hintCat === "boolean") S.hintCat = d.hintCat;
@@ -719,6 +761,12 @@ function clamp(){
      promise, so "up to everyone" is a legitimate thing to ask for. */
   const maxImp = S.rand ? S.players : Math.max(1, Math.floor((S.players-1)/2));
   S.imposters = Math.max(1, Math.min(maxImp, S.imposters));
+  /* the blackmailed are honest players, so they cost the table less than an
+     imposter does - but between them they still must not outnumber the seats
+     playing it straight. a ceiling, again, may reach as far as it likes. */
+  const maxBm = S.rand ? Math.max(0, S.players - S.imposters)
+                       : Math.max(0, Math.floor(S.players/2) - S.imposters);
+  S.blackmail = Math.max(0, Math.min(maxBm, S.blackmail));
 }
 
 function paintText(){
@@ -736,6 +784,9 @@ function paintSetup(){
   const rnd = S.rand;
   $("#v-imposters").textContent = rnd ? "≤" + S.imposters : S.imposters;
   $("#v-imposters").classList.toggle("rand", rnd);
+  /* "up to" only reads as a secret when there is something to be secret about */
+  $("#v-blackmail").textContent = rnd && S.blackmail ? "≤" + S.blackmail : S.blackmail;
+  $("#v-blackmail").classList.toggle("rand", rnd && !!S.blackmail);
   $("#v-minutes").textContent = S.minutes;
   $("#app-version").textContent = "v" + APP_VERSION;
   $("#eyebrow-line").textContent = t("tableline").replace("{n}", S.players);
@@ -857,6 +908,34 @@ function rollImposterCount(cap){
   return Math.floor(Math.random() * (cap + 1));
 }
 
+/* The word a blackmailed player has to smuggle into the round. It is drawn
+   from a category that is NOT in play, which is the whole trick: on a food
+   round "cheese" would slip by unnoticed and there would be no game in it,
+   but "helicopter" has to be argued for. WORDS is the source in both modes -
+   undercover deals from PAIRS, but every category still has a WORDS list. */
+function drawBlackmailWord(){
+  const pool = CATS.filter(c =>
+    c.key !== S.catKey &&
+    (!c.langs || c.langs.indexOf(S.lang) >= 0) &&
+    WORDS[S.lang][c.key] && WORDS[S.lang][c.key].length);
+  if(!pool.length) return "";
+  const taken = Object.keys(S.bmWords).map(k=>S.bmWords[k]);
+  /* a different category is not enough on its own - some words sit in two of
+     them ("Dentist" is a job and a place), and one of those would blend into
+     the round exactly as if it had been drawn from it. so check against the
+     round's own list, not merely against the round's own word. */
+  const here = (WORDS[S.lang][S.catKey] || []).map(e => e.split("|")[0]);
+  /* a handful of tries to miss all of that and anything already handed out;
+     if they all collide the draw is abandoned rather than looped forever */
+  for(let i=0;i<12;i++){
+    const c = pool[Math.floor(Math.random()*pool.length)];
+    const list = WORDS[S.lang][c.key];
+    const w = list[Math.floor(Math.random()*list.length)].split("|")[0];
+    if(w !== S.word && w !== S.twin && here.indexOf(w) < 0 && taken.indexOf(w) < 0) return w;
+  }
+  return "";
+}
+
 function deal(){
   clamp();
   /* only categories that exist in this language can be dealt; if every
@@ -894,6 +973,12 @@ function deal(){
   for(let i=1;i<=S.players;i++) seats.push(i);
   for(let i=seats.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [seats[i],seats[j]]=[seats[j],seats[i]]; }
   S.impSet = new Set(seats.slice(0, count));
+  /* taken from what the imposters left behind, so the two can never overlap -
+     a blackmailed player is an honest player, that is the whole point of them */
+  const bmCount = S.rand ? rollImposterCount(S.blackmail) : S.blackmail;
+  S.bmSet = new Set(seats.slice(count, count + bmCount));
+  S.bmWords = {};
+  S.bmSet.forEach(n => { S.bmWords[n] = drawBlackmailWord(); });
   S.first = 1+Math.floor(Math.random()*S.players);
 
   S.votes = null;   /* last round's tally must not leak onto this reveal */
@@ -907,14 +992,18 @@ function paintSeat(){
   $("#seat-name").textContent = nameOf(S.seat);
   $("#deal-progress").textContent = S.seat+" / "+S.players;
   const isImp = S.impSet.has(S.seat);
+  const isBm = S.bmSet.has(S.seat);
   const und = S.mode === "undercover";
   Peek.reset();
   /* undercover: no role on the card at all. every seat sees a word and a
-     category and nothing else - the odd player is never told they are odd. */
-  $("#front-badge").style.display = und ? "none" : "";
-  if(!und){
-    $("#front-badge").textContent = isImp ? t("imposter") : t("word");
-    $("#front-badge").classList.toggle("imp", isImp);
+     category and nothing else - the odd player is never told they are odd.
+     the one exception is a blackmailed seat, which has a job to be told
+     about. that leaks nothing: only they ever see their own card. */
+  $("#front-badge").style.display = und && !isBm ? "none" : "";
+  if(!und || isBm){
+    $("#front-badge").textContent = isBm ? t("bm_badge") : isImp ? t("imposter") : t("word");
+    $("#front-badge").classList.toggle("imp", isImp && !isBm);
+    $("#front-badge").classList.toggle("bm", isBm);
   }
   const wordEl = $("#front-word");
   const shown = und ? (isImp ? S.twin : S.word) : (isImp ? "?" : S.word);
@@ -924,6 +1013,17 @@ function paintSeat(){
   $("#front-cat").textContent = S.hintCat ? catLabel(S.catKey) : "";
   const seesClue = !und && S.hintMode==="imposter" && isImp;
   $("#front-hint").textContent = seesClue ? S.clue : "";
+  /* your own assignment if you are the one carrying it, or - if you are the
+     imposter - the word you should be listening for. the imposter is told
+     what, never who, so hearing it still leaves them a judgement to make.
+     nothing at all when no blackmail was dealt: an imposter who is shown a
+     word that nobody has to say would be hunting a round that does not exist,
+     and this app does not offer options that cannot be right. */
+  const someBm = Object.keys(S.bmWords).map(k=>S.bmWords[k]).filter(Boolean);
+  const task = isBm ? S.bmWords[S.seat] : isImp ? someBm.join(" · ") : "";
+  $("#front-task").style.display = task ? "" : "none";
+  $("#task-label").textContent = task ? (isBm ? t("bm_you") : t("bm_imp")) : "";
+  $("#task-word").textContent = task || "";
   const last = S.seat >= S.players;
   $("#btn-next").textContent = last ? t("start") : t("next");
   $("#btn-next").disabled = true;
@@ -1167,6 +1267,20 @@ function doReveal(){
   if(S.impSet.size === 0) pill(t("noone"), "none");
   else if(S.impSet.size === S.players) pill(t("everyone"), "all");
   else Array.from(S.impSet).sort((a,b)=>a-b).forEach(n=>pill(seatLabel(n)));
+  /* who was carrying a word, and which one - the app never saw whether they
+     got it out, so it just puts it on the table and lets the room decide */
+  const bmBox = $("#rev-bm-box");
+  if(S.bmSet.size){
+    bmBox.style.display = "";
+    const bl = $("#rev-bm"); bl.innerHTML = "";
+    Array.from(S.bmSet).sort((a,b)=>a-b).forEach(n=>{
+      const d = document.createElement("div"); d.className = "imp-pill bm";
+      /* an em dash, not the seat label's own middle dot - with names on,
+         "1 · Marko · Helikopter" reads as three people */
+      d.textContent = seatLabel(n) + " — " + S.bmWords[n];
+      bl.appendChild(d);
+    });
+  } else bmBox.style.display = "none";
   /* the tally: every voted seat with its count, green where votes landed
      on a real imposter. the accused are the top count - all of them on a
      tie - and the verdict is judged on the accused alone. */

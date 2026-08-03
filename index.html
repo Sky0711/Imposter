@@ -29,6 +29,9 @@
   --blue:#16359B;
   --player:#7AB0FF;   /* bright blue, 6.9:1 on the word card */
   --imp:#FF6B7E;      /* light red, 5.5:1 - as legible as --player, not --signal */
+  /* blackmail answers to no mode and borrows no role's hue: black, with bone
+     on it at 17:1. the one card in the deck with no colour in it at all. */
+  --noir:#08050F;
   --card:#241340;      /* every card - bone on this is 14.4:1 */
   --card-top:#2E1852;  /* the lit corner of the card face */
   /* the mode's own colour. classic is brass, undercover goes green - set on
@@ -245,6 +248,11 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
    the one holding the only red rectangle in the room. The role is in the
    words on the card, which you have to be holding it to read. */
 .card .front{background:linear-gradient(165deg,var(--card-top),var(--card));color:var(--bone)}
+/* the cover stops with its handle still over the top of the card, so the
+   face is centred in what is left rather than in the whole rectangle -
+   otherwise everything sits a strip's worth too high. Peek measures the
+   handle and writes --strip, since its height follows the type. */
+.card .front{padding-top:calc(26px + var(--strip, 78px))}
 .seat-num{font-family:var(--display);font-weight:800;font-size:88px;line-height:.9;color:var(--accent);letter-spacing:-.03em}
 .seat-name{font-family:var(--display);font-weight:700;font-size:27px;line-height:1.15;letter-spacing:-.01em;word-break:break-word;max-width:100%}
 
@@ -293,17 +301,19 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 /* the role is red again - but as a line of text, not a field of colour.
    a few letters cannot be read from across the table; a red card could. */
 .front .badge.imp{background:rgba(255,107,126,.13);border-color:var(--imp);color:var(--imp)}
-/* the blackmailed are honest, so their badge takes the mode's own colour
-   rather than the imposter's red - it is a job, not a side */
-.front .badge.bm{background:rgba(224,169,59,.14);border-color:var(--accent);color:var(--accent)}
-:root[data-mode="undercover"] .front .badge.bm{background:rgba(53,192,142,.14)}
+/* filled black rather than outlined in a hue - the imposter is red, an
+   ordinary player is blue, and blackmail is the one that is simply black */
+.front .badge.bm{background:var(--noir);border-color:rgba(244,236,224,.34);color:var(--bone)}
 /* the assignment: quiet label, loud word. the word is the whole instruction,
    so it carries the weight and the label just introduces it. */
 .task{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:2px;max-width:26ch}
 .task span{font-size:15px;line-height:1.4;color:var(--dim-2)}
+/* the word to smuggle. bare, and the loudest thing under the secret word
+   itself - the black pill belongs to the badge, and two of them stacked
+   read as one element repeated rather than as instruction and label */
 .task b{
-  font-family:var(--display);font-weight:800;font-size:clamp(23px,6.4vw,31px);line-height:1.05;
-  letter-spacing:-.01em;color:var(--accent);text-transform:uppercase;overflow-wrap:break-word;
+  font-family:var(--display);font-weight:800;font-size:clamp(24px,6.6vw,32px);line-height:1.1;
+  letter-spacing:.005em;color:var(--bone);text-transform:uppercase;overflow-wrap:break-word;
 }
 
 /* ---- play ---- */
@@ -488,14 +498,17 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
           </div>
           <div class="pull" id="pull"><b>↑</b><span data-t="tapto">Hold to peek</span></div>
         </div>
+        <!-- the cover slides upward, so the card uncovers from its foot.
+             the role is the first thing to appear and the word the last,
+             which is also the least you have to expose to check who you are -->
         <div class="face front" id="front">
-          <div class="badge" id="front-badge">Word</div>
           <div class="word" id="front-word">—</div>
           <div class="cat-tag" id="front-cat"></div>
           <div class="hint-line" id="front-hint"></div>
           <div class="task" id="front-task" style="display:none">
             <span id="task-label"></span><b id="task-word"></b>
           </div>
+          <div class="badge" id="front-badge">Word</div>
         </div>
       </div>
       <div class="eyebrow center" id="deal-note" data-t="note_peek">Nobody else looks.</div>
@@ -579,7 +592,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "6.0";
+const APP_VERSION = "6.1";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list
@@ -713,7 +726,7 @@ tableline:"igra u krug · {n} igrača"}
 
 /* ============ state ============ */
 /* cats: which categories are in play. empty means all of them. */
-const S = {players:4, imposters:1, blackmail:0, randImp:false, randBm:false, minutes:4, hintCat:true, hintMode:"imposter", hintStyle:"simple", vote:true, mode:"classic", lang:"hr", cats:[], names:[],
+const S = {players:4, imposters:1, blackmail:0, randImp:false, randBm:false, touched:"", minutes:4, hintCat:true, hintMode:"imposter", hintStyle:"simple", vote:true, mode:"classic", lang:"hr", cats:[], names:[],
            word:"", twin:"", clue:"", catKey:"", impSet:new Set(), bmSet:new Set(), bmWords:{},
            votes:null, seat:1, first:1, left:0, timer:null, running:false};
 
@@ -786,10 +799,21 @@ function clamp(){
      worth playing beside a blackmailed seat, where something genuinely odd
      is still being said and there is no imposter to pin it on. */
   S.imposters = Math.max(0, Math.min(S.players, S.imposters));
-  /* what is left of the table once the imposters have their seats. the
-     blackmailed are honest players, so they need no guardrail of their own
-     - they only need a seat that an imposter is not already sitting in. */
-  S.blackmail = Math.max(0, Math.min(S.players - S.imposters, S.blackmail));
+  S.blackmail = Math.max(0, Math.min(S.players, S.blackmail));
+  /* In undercover the two roles may share a seat (see deal), so neither
+     crowds the other and there is nothing further to settle. */
+  if(S.mode === "undercover") return;
+  /* In classic they need a seat each. When the two together overrun the
+     table, the number you just moved keeps what you asked for and the
+     other one yields - otherwise raising the blackmailed would silently
+     refuse while raising the imposters pushed them down, which is only
+     fair to whichever line happened to be clamped first. */
+  const yieldOn = who => {
+    const over = S.imposters + S.blackmail - S.players;
+    if(over > 0) S[who] = Math.max(0, S[who] - over);
+  };
+  if(S.touched === "blackmail"){ yieldOn("imposters"); yieldOn("blackmail"); }
+  else { yieldOn("blackmail"); yieldOn("imposters"); }
 }
 
 function paintText(){
@@ -1008,10 +1032,23 @@ function deal(){
   for(let i=1;i<=S.players;i++) seats.push(i);
   for(let i=seats.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [seats[i],seats[j]]=[seats[j],seats[i]]; }
   S.impSet = new Set(seats.slice(0, count));
-  /* taken from what the imposters left behind, so the two can never overlap -
-     a blackmailed player is an honest player, that is the whole point of them */
   const bmCount = S.randBm ? rollImposterCount(S.blackmail) : S.blackmail;
-  S.bmSet = new Set(seats.slice(count, count + bmCount));
+  if(S.mode === "undercover"){
+    /* Drawn from the whole table, imposters included. If the blackmailed
+       could never be the odd one, then finding a blackmail note on your
+       card would tell you that you are holding the majority word - and in
+       undercover nobody may learn where they stand. Overlapping costs
+       nothing: that seat plays the word it was dealt and smuggles its
+       word in, never knowing which of the two it was. */
+    const any = seats.slice();
+    for(let i=any.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [any[i],any[j]]=[any[j],any[i]]; }
+    S.bmSet = new Set(any.slice(0, bmCount));
+  } else {
+    /* classic: taken from what the imposters left behind. there a card already
+       names your role, so there is nothing left for the overlap to protect,
+       and being handed both jobs at once would just be a punishing round. */
+    S.bmSet = new Set(seats.slice(count, count + bmCount));
+  }
   S.bmWords = {};
   S.bmSet.forEach(n => { S.bmWords[n] = drawBlackmailWord(); });
   S.first = 1+Math.floor(Math.random()*S.players);
@@ -1055,7 +1092,12 @@ function paintSeat(){
      word that nobody has to say would be hunting a round that does not exist,
      and this app does not offer options that cannot be right. */
   const someBm = Object.keys(S.bmWords).map(k=>S.bmWords[k]).filter(Boolean);
-  const task = isBm ? S.bmWords[S.seat] : isImp ? someBm.join(" · ") : "";
+  /* The imposter is told what to listen for - but ONLY in classic, where
+     they already know their own role. In undercover nobody is told they
+     are the odd one, and handing the blackmail word to exactly that seat
+     would have said it out loud: you are the only person reading this, so
+     you are the odd one. That is the one thing undercover must never leak. */
+  const task = isBm ? S.bmWords[S.seat] : (!und && isImp) ? someBm.join(" · ") : "";
   $("#front-task").style.display = task ? "" : "none";
   $("#task-label").textContent = task ? (isBm ? t("bm_you") : t("bm_imp")) : "";
   $("#task-word").textContent = task || "";
@@ -1085,10 +1127,20 @@ const Peek = (function(){
     put(px);
   };
 
+  /* the handle's height, which the face is padded by so it centres in the
+     part of the card the cover will leave showing. only worth writing when
+     the card is actually laid out - paintSeat runs the first time while the
+     deal screen is still display:none, where every height reads back 0. */
+  function measureStrip(){
+    const h = pull.offsetHeight;
+    if(h) card.style.setProperty("--strip", h + "px");
+  }
+
   function reset(){
     cover.style.transition = "none";
     put(0);
     seen = false;
+    measureStrip();
     requestAnimationFrame(()=>{ cover.style.transition = ""; });
   }
   function close(){ settle(0); }
@@ -1104,6 +1156,7 @@ const Peek = (function(){
   card.addEventListener("pointerdown", e => {
     height = card.getBoundingClientRect().height;
     limit = -(height - pull.offsetHeight);   /* stop with the handle showing */
+    measureStrip();                          /* laid out for certain by now */
     const at = currentY();                    /* read it before killing the ease */
     cover.style.transition = "none";          /* 1:1 with the finger */
     put(at);
@@ -1391,6 +1444,7 @@ $$(".stepper").forEach(st=>{
     b.onclick = ()=>{
       const key = st.dataset.step, d = parseInt(b.dataset.d,10);
       S[key] += d;
+      S.touched = key;   /* so clamp knows which number to keep */
       buzz(8); paintSetup();
     };
   });

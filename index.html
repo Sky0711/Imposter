@@ -635,12 +635,12 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
     </div>
 
     <div class="field" id="f-bmpick">
-      <div><div class="label" data-t="a_who">Picks who says it</div><div class="hint" data-t="a_who_h">Otherwise it lands at random</div></div>
+      <div><div class="label" data-t="a_who">Picks who is blackmailed</div><div class="hint" data-t="a_who_h">Otherwise it lands at random</div></div>
       <div class="switch" id="sw-bmpick"><i></i></div>
     </div>
 
     <div class="field" id="f-bmwhen">
-      <div><div class="label" data-t="a_when">Picks the round</div><div class="hint" data-t="a_when_h">Which round the word is due</div></div>
+      <div><div class="label" data-t="a_when">Picks the round</div><div class="hint" data-t="a_when_h">At which round the blackmail is due</div></div>
       <div class="switch" id="sw-bmwhen"><i></i></div>
     </div>
 
@@ -817,7 +817,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "8.7";
+const APP_VERSION = "8.8";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list
@@ -934,8 +934,8 @@ impadv:"Imposter advantages",
 a_cat:"Sees the category",a_cat_h:"Narrows it down for them",
 a_clue:"Sees a clue",a_clue_h:"One clue per word, only for them",
 a_bm:"Sees the blackmail",a_bm_h:"Knows the word to listen for",
-a_who:"Picks who says it",a_who_h:"Otherwise it lands at random",
-a_when:"Picks the round",a_when_h:"Which round the word is due",
+a_who:"Picks who is blackmailed",a_who_h:"Otherwise it lands at random",
+a_when:"Picks the round",a_when_h:"At which round the blackmail is due",
 nonames:"none yet",suggest:"Offer a word",suggest_h:"Keep it, or clear it and write your own",clearw:"clear",
 bmwhen:"Imposter picks the round",bmwhen_h:"Which round the word is due",
 inround:"at round {n}",wready:"Add your word",note_write:"Nobody else looks.",
@@ -980,8 +980,8 @@ impadv:"Prednosti uljeza",
 a_cat:"Vidi kategoriju",a_cat_h:"Suzi mu izbor",
 a_clue:"Vidi natuknicu",a_clue_h:"Jedna natuknica po riječi",
 a_bm:"Vidi ucjenu",a_bm_h:"Zna koju riječ čekati",
-a_who:"Bira kome ide",a_who_h:"Inače ide nasumično",
-a_when:"Bira krug",a_when_h:"U kojem krugu riječ mora pasti",
+a_who:"Bira tko je ucijenjen",a_who_h:"Inače ide nasumično",
+a_when:"Bira krug",a_when_h:"U kojem krugu ucjena mora pasti",
 nonames:"nema ih",suggest:"Ponudi riječ",suggest_h:"Ostavi ju ili obriši i napiši svoju",clearw:"obriši",
 bmwhen:"Uljez bira kad",bmwhen_h:"U kojem krugu riječ mora pasti",
 inround:"u {n}. krugu",wready:"Dodaj riječ",note_write:"Nitko drugi ne gleda.",

@@ -349,14 +349,31 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 }
 .wrows{display:flex;flex-direction:column;gap:16px;width:100%;max-width:340px}
 .wrow{display:flex;flex-direction:column;gap:9px;width:100%}
+.winput{position:relative;width:100%}
 .wrow input{
   width:100%;font:inherit;font-size:22px;font-weight:700;
   font-family:var(--display);text-align:center;min-height:60px;
   background:var(--velvet);color:var(--bone);
   border:1.5px solid rgba(244,236,224,.18);border-radius:14px;
-  padding:14px 16px;outline:none;
+  padding:14px 46px;outline:none;
   -webkit-user-select:text;user-select:text;
 }
+/* one tap to empty an offered word and start typing your own */
+.wclear{
+  position:absolute;right:5px;top:50%;transform:translateY(-50%);
+  width:42px;height:42px;border-radius:11px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:26px;line-height:1;color:var(--dim);background:transparent;
+}
+.wclear:active{background:var(--velvet-2);color:var(--bone)}
+/* said on the way out, not while they are still typing - a word is not
+   wrong until somebody tries to leave with it */
+.wrow input.bad{border-color:var(--imp)}
+.werr{
+  font-size:14.5px;font-weight:600;line-height:1.4;color:var(--imp);
+  max-width:28ch;text-align:center;
+}
+.werr:empty{display:none}
 .wrow input::placeholder{color:rgba(244,236,224,.4);font-weight:400;font-family:var(--body);font-size:17px}
 .wrow input:focus{border-color:var(--accent)}
 /* who the word lands on, when the imposter is the one choosing. a seat
@@ -553,6 +570,11 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
       <div class="switch" id="sw-bmpick"><i></i></div>
     </div>
 
+    <div class="field" id="f-suggest">
+      <div><div class="label" data-t="suggest">Offer a word</div><div class="hint" data-t="suggest_h">Keep it, or clear it and write your own</div></div>
+      <div class="switch" id="sw-suggest"><i></i></div>
+    </div>
+
     <div class="field" id="f-bmwhen">
       <div><div class="label" data-t="bmwhen">Imposter picks the round</div><div class="hint" data-t="bmwhen_h">Which round the word is due</div></div>
       <div class="switch" id="sw-bmwhen"><i></i></div>
@@ -635,6 +657,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
         <div class="wask" id="write-ask"></div>
         <div class="wpreset" id="write-preset"></div>
         <div class="wrows" id="write-rows"></div>
+        <div class="werr" id="write-err"></div>
       </div>
     </div>
     <div class="eyebrow center" id="write-note" data-t="note_write">Nobody else looks.</div>
@@ -758,7 +781,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "7.7";
+const APP_VERSION = "7.8";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list
@@ -869,12 +892,14 @@ bmeach:"Blackmails",bmeach_h:"Everyone writes this many words",
 bmpick:"Imposter picks the target",bmpick_h:"Otherwise it lands at random",
 ask_to:"Who says it",ask_when:"At round",
 preset:"Already chosen — touch it only if you want it different.",
+tooshort:"A word needs at least two letters.",
+suggest:"Offer a word",suggest_h:"Keep it, or clear it and write your own",clearw:"clear",
 bmwhen:"Imposter picks the round",bmwhen_h:"Which round the word is due",
 inround:"at round {n}",wready:"Add your word",note_write:"Nobody else looks.",
 ask_word:"Write a secret word. One of the words written tonight becomes the round's.",
 ask_plant:"Write a word to plant. Somebody will be made to say it \u2014 and it will not be you.",
 wordph:"a word",bm_mine:"The blackmail you planted:",thewritten:"the words you wrote",
-bm_you:"You are blackmailed to say the word:",bm_imp:"Somebody is blackmailed to say:",
+bm_you:"Blackmailed to say the word:",bm_imp:"Somebody is blackmailed to say:",
 thebm:"blackmailed",
 tableline:"pass-and-play · {n} players"},
 hr:{players:"Igrači",players_h:"Ide u krug",imposters:"Uljezi",imposters_h:"Glumi da zna riječ",
@@ -906,22 +931,24 @@ bmeach:"Ucjene",bmeach_h:"Toliko riječi svatko piše",
 bmpick:"Uljez bira kome",bmpick_h:"Inače ide nasumično",
 ask_to:"Tko je govori",ask_when:"U kojem krugu",
 preset:"Već je odabrano — diraj samo ako želiš drukčije.",
+tooshort:"Riječ mora imati barem dva slova.",
+suggest:"Ponudi riječ",suggest_h:"Ostavi ju ili obriši i napiši svoju",clearw:"obriši",
 bmwhen:"Uljez bira kad",bmwhen_h:"U kojem krugu riječ mora pasti",
 inround:"u {n}. krugu",wready:"Dodaj riječ",note_write:"Nitko drugi ne gleda.",
 ask_word:"Napiši tajnu riječ. Jedna od večerašnjih riječi bit će rundina.",
 ask_plant:"Napiši riječ koju podmećeš. Netko će je morati reći \u2014 i to nećeš biti ti.",
 wordph:"riječ",bm_mine:"Ucjena koju si podmetnuo:",thewritten:"napisane riječi",
-bm_you:"Ucijenjen si da kažeš riječ:",bm_imp:"Netko je ucijenjen da kaže:",
+bm_you:"Ucijenjen da kažeš riječ:",bm_imp:"Netko je ucijenjen da kaže:",
 thebm:"ucijenjeni",
 tableline:"igra u krug · {n} igrača"}
 };
 
 /* ============ state ============ */
 /* cats: which categories are in play. empty means all of them. */
-const S = {players:4, imposters:1, blackmail:0, randImp:false, randBm:false, touched:"", bmImp:true, bmPick:false, bmWhen:false, minutes:4, hintCat:true, hintMode:"imposter", hintStyle:"simple", vote:true, mode:"classic", lang:"hr", cats:[], names:[],
+const S = {players:4, imposters:1, blackmail:0, randImp:false, randBm:false, touched:"", bmImp:true, bmPick:false, bmWhen:false, suggest:false, minutes:4, hintCat:true, hintMode:"imposter", hintStyle:"simple", vote:true, mode:"classic", lang:"hr", cats:[], names:[],
            word:"", twin:"", clue:"", catKey:"", impSet:new Set(), bmSet:new Set(), bmWords:{},
            /* conspiracy: what each seat wrote, and what each imposter planted */
-           pool:{}, plants:{}, bmRound:{}, wseat:1,
+           pool:{}, plants:{}, bmRound:{}, offered:[], wseat:1,
            votes:null, seat:1, first:1, left:0, timer:null, running:false};
 
 const $ = s => document.querySelector(s);
@@ -940,7 +967,7 @@ function save(){
     localStorage.setItem(SAVE_KEY, JSON.stringify({
       players:S.players, imposters:S.imposters, blackmail:S.blackmail,
       randImp:S.randImp, randBm:S.randBm, minutes:S.minutes,
-      hintCat:S.hintCat, hintMode:S.hintMode, hintStyle:S.hintStyle, bmImp:S.bmImp, bmPick:S.bmPick, bmWhen:S.bmWhen, vote:S.vote, mode:S.mode, lang:S.lang, cats:S.cats,
+      hintCat:S.hintCat, hintMode:S.hintMode, hintStyle:S.hintStyle, bmImp:S.bmImp, bmPick:S.bmPick, bmWhen:S.bmWhen, suggest:S.suggest, vote:S.vote, mode:S.mode, lang:S.lang, cats:S.cats,
       names:S.names.slice(0,16)
     }));
   }catch(e){}
@@ -968,6 +995,7 @@ function load(){
     if(typeof d.bmImp === "boolean") S.bmImp = d.bmImp;
     if(typeof d.bmPick === "boolean") S.bmPick = d.bmPick;
     if(typeof d.bmWhen === "boolean") S.bmWhen = d.bmWhen;
+    if(typeof d.suggest === "boolean") S.suggest = d.suggest;
     if(["classic","undercover","conspiracy"].indexOf(d.mode) >= 0) S.mode = d.mode;
     if(["simple","niche","long","random"].indexOf(d.hintStyle) >= 0) S.hintStyle = d.hintStyle;
     /* "all" was dropped as an option - fold old saves onto imposter-only */
@@ -1082,6 +1110,8 @@ function paintSetup(){
   $("#sw-bmpick").classList.toggle("on", S.bmPick);
   $("#f-bmwhen").style.display = con ? "" : "none";
   $("#sw-bmwhen").classList.toggle("on", S.bmWhen);
+  $("#f-suggest").style.display = con ? "" : "none";
+  $("#sw-suggest").classList.toggle("on", S.suggest);
   /* no clues at all in undercover - the other word is the clue */
   const clues = S.mode !== "undercover" && !con;
   $("#f-hintw").style.display = clues ? "" : "none";
@@ -1248,6 +1278,22 @@ function drawRoles(){
   return {seats, count};
 }
 
+/* A word off the app's shelves for anyone who cannot be bothered writing one.
+   Never repeats inside a round, so the pool does not fill up with one word. */
+function drawSuggestion(){
+  const pool = CATS.filter(c =>
+    (!c.langs || c.langs.indexOf(S.lang) >= 0) &&
+    WORDS[S.lang][c.key] && WORDS[S.lang][c.key].length);
+  if(!pool.length) return "";
+  for(let i=0;i<16;i++){
+    const c = pool[Math.floor(Math.random()*pool.length)];
+    const list = WORDS[S.lang][c.key];
+    const w = list[Math.floor(Math.random()*list.length)].split("|")[0];
+    if(S.offered.indexOf(w) < 0){ S.offered.push(w); return w; }
+  }
+  return "";
+}
+
 function deal(){
   clamp();
   /* Conspiracy owns no words: the table writes them. Roles are drawn now,
@@ -1255,7 +1301,7 @@ function deal(){
      writing pass - that is the pass where they plant their blackmail. */
   if(S.mode === "conspiracy"){
     S.catKey = ""; S.word = ""; S.twin = ""; S.clue = "";
-    S.bmSet = new Set(); S.bmWords = {}; S.bmRound = {}; S.pool = {}; S.plants = {};
+    S.bmSet = new Set(); S.bmWords = {}; S.bmRound = {}; S.pool = {}; S.plants = {}; S.offered = [];
     drawRoles();
     S.votes = null;
     S.wseat = 1;
@@ -1347,16 +1393,39 @@ function paintWrite(){
   $("#write-preset").textContent = isImp && (S.bmPick || S.bmWhen) ? t("preset") : "";
   const picks = isImp && S.bmPick;
   const box = $("#write-rows"); box.innerHTML = "";
+  $("#write-err").textContent = "";
   const rows = writeRows();
   for(let r=0; r<rows; r++){
     const row = document.createElement("div"); row.className = "wrow";
+    const wrap = document.createElement("div"); wrap.className = "winput";
     const inp = document.createElement("input");
     inp.type = "text"; inp.maxLength = 20; inp.autocomplete = "off";
     inp.setAttribute("autocorrect","off"); inp.setAttribute("autocapitalize","off");
     inp.spellcheck = false; inp.setAttribute("enterkeyhint","done");
     inp.placeholder = t("wordph");         /* blank: never the last seat's word */
-    inp.oninput = paintWriteReady;
-    row.appendChild(inp);
+    inp.oninput = ()=>{
+      delete inp.dataset.offered;
+      inp.classList.remove("bad"); $("#write-err").textContent = "";
+      paintWriteReady();
+    };
+    if(S.suggest){
+      inp.value = drawSuggestion();
+      /* still the app's word until they touch it: tapping in selects the lot,
+         so the first letter they type replaces it rather than joining it */
+      if(inp.value) inp.dataset.offered = "1";
+      inp.onfocus = ()=>{ if(inp.dataset.offered) inp.select(); };
+    }
+    wrap.appendChild(inp);
+    const clr = document.createElement("button");
+    clr.type = "button"; clr.className = "wclear"; clr.textContent = "×";
+    clr.setAttribute("aria-label", t("clearw"));
+    clr.onclick = ()=>{
+      delete inp.dataset.offered; inp.value = "";
+      inp.classList.remove("bad"); $("#write-err").textContent = "";
+      inp.focus(); buzz(10); paintWriteReady();
+    };
+    wrap.appendChild(clr);
+    row.appendChild(wrap);
     if(picks){
       const to = document.createElement("div"); to.className = "wto";
       const lb = document.createElement("div"); lb.className = "lb";
@@ -1405,6 +1474,8 @@ function paintWrite(){
      aim they have to make is an extra beat everybody can see; an aim they may
      change is a risk they choose to take, which is the game. */
   if(picks) preAim(n);
+  /* an offered word already fills the field, so the button is live at once */
+  paintWriteReady();
   /* the round comes pre-chosen for the same reason the seat does: nothing
      the imposter is obliged to tap, so their turn is no longer than anyone's */
   $$("#write-rows .wwhen").forEach(wh=>{
@@ -1450,8 +1521,23 @@ function openWrite(){
 
 /* one word per seat: the innocents' become candidates for the round's secret,
    the imposters' become the blackmail somebody else will have to say */
+/* One letter is a shrug, not a word - it gives the table nothing to describe
+   and nothing to smuggle. Checked when they try to leave rather than as they
+   type, so the message arrives once, at the moment it matters. */
 function takeWrite(){
   const rows = $$("#write-rows .wrow");
+  let short = false;
+  rows.forEach(r => {
+    const inp = r.querySelector("input");
+    const bad = inp.value.trim().length < 2;
+    inp.classList.toggle("bad", bad);
+    if(bad) short = true;
+  });
+  if(short){
+    $("#write-err").textContent = t("tooshort");
+    buzz([40,60,40]);
+    return false;
+  }
   const got = rows.map(r => {
     const chosen = r.querySelector(".wto:not(.wwhen) button.on");
     const when   = r.querySelector(".wwhen button.on");
@@ -1976,6 +2062,7 @@ $("#sw-vote").onclick  = ()=>{ S.vote = !S.vote; buzz(14); paintSetup(); };
 $("#sw-bmimp").onclick = ()=>{ S.bmImp = !S.bmImp; buzz(14); paintSetup(); };
 $("#sw-bmpick").onclick = ()=>{ S.bmPick = !S.bmPick; buzz(14); paintSetup(); };
 $("#sw-bmwhen").onclick = ()=>{ S.bmWhen = !S.bmWhen; buzz(14); paintSetup(); };
+$("#sw-suggest").onclick = ()=>{ S.suggest = !S.suggest; buzz(14); paintSetup(); };
 $$("#seg-lang button").forEach(b=>{
   b.onclick = ()=>{ S.lang = b.dataset.lang; buzz(10); paintSetup(); };
 });

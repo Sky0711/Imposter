@@ -336,6 +336,11 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   letter-spacing:-.01em;color:var(--accent);word-break:break-word;max-width:100%;
 }
 .wask{font-size:17px;line-height:1.45;color:var(--dim-2);max-width:26ch}
+/* the chips arrive already chosen, and a chip that looks like a pending
+   decision gets tapped out of doubt - which is the only thing that makes an
+   imposter's turn longer than anybody else's */
+.wpreset{font-size:13.5px;line-height:1.4;color:var(--dim);max-width:28ch;margin-top:-6px}
+.wpreset:empty{display:none}
 /* the imposter is asked for a blackmail, so the ask wears the blackmail's
    black - the same panel their card will show it back in later */
 .wform.imp .wask{
@@ -628,6 +633,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
         <div class="wwho" id="write-who"></div>
         <div class="badge" id="write-badge">Word</div>
         <div class="wask" id="write-ask"></div>
+        <div class="wpreset" id="write-preset"></div>
         <div class="wrows" id="write-rows"></div>
       </div>
     </div>
@@ -752,7 +758,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "7.6";
+const APP_VERSION = "7.7";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list
@@ -862,6 +868,7 @@ bmimp:"Imposter sees blackmail",bmimp_h:"Knows the word to listen for",
 bmeach:"Blackmails",bmeach_h:"Everyone writes this many words",
 bmpick:"Imposter picks the target",bmpick_h:"Otherwise it lands at random",
 ask_to:"Who says it",ask_when:"At round",
+preset:"Already chosen — touch it only if you want it different.",
 bmwhen:"Imposter picks the round",bmwhen_h:"Which round the word is due",
 inround:"at round {n}",wready:"Add your word",note_write:"Nobody else looks.",
 ask_word:"Write a secret word. One of the words written tonight becomes the round's.",
@@ -898,6 +905,7 @@ bmimp:"Uljez vidi ucjenu",bmimp_h:"Zna koju riječ čekati",
 bmeach:"Ucjene",bmeach_h:"Toliko riječi svatko piše",
 bmpick:"Uljez bira kome",bmpick_h:"Inače ide nasumično",
 ask_to:"Tko je govori",ask_when:"U kojem krugu",
+preset:"Već je odabrano — diraj samo ako želiš drukčije.",
 bmwhen:"Uljez bira kad",bmwhen_h:"U kojem krugu riječ mora pasti",
 inround:"u {n}. krugu",wready:"Dodaj riječ",note_write:"Nitko drugi ne gleda.",
 ask_word:"Napiši tajnu riječ. Jedna od večerašnjih riječi bit će rundina.",
@@ -1336,6 +1344,7 @@ function paintWrite(){
   $("#write-badge").textContent = isImp ? t("imposter") : t("word");
   $("#write-badge").classList.toggle("imp", isImp);
   $("#write-ask").textContent = isImp ? t("ask_plant") : t("ask_word");
+  $("#write-preset").textContent = isImp && (S.bmPick || S.bmWhen) ? t("preset") : "";
   const picks = isImp && S.bmPick;
   const box = $("#write-rows"); box.innerHTML = "";
   const rows = writeRows();

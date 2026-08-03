@@ -238,9 +238,25 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
     radial-gradient(80% 50% at 50% 110%, rgba(53,192,142,.13), transparent 70%);
 }
 .card .front{z-index:1}
-.hint-line{
-  font-size:17.5px;line-height:1.45;color:var(--dim-2);
-  max-width:24ch;margin-top:2px;
+/* Everything the card tells you past the word itself takes one shape: a
+   quiet line saying what this is, then the thing itself in the colour that
+   names its kind. Blue is the help you were given, black is the blackmail.
+   You should be able to tell the two apart without reading either. */
+.info{display:flex;flex-direction:column;align-items:center;gap:6px;max-width:100%}
+.info .lbl{font-size:14.5px;font-weight:600;line-height:1.35;color:var(--dim);max-width:26ch}
+.info .v{max-width:100%;overflow-wrap:break-word}
+.info.clue .lbl{color:rgba(122,176,255,.66)}
+.info.clue .v{
+  font-family:var(--body);font-weight:600;font-size:clamp(17px,4.6vw,21px);
+  line-height:1.4;color:rgba(122,176,255,.92);
+}
+/* the word to smuggle is black, as its name promises - which on a card this
+   dark means a black field with bone on it, not black ink nobody could read */
+.info.bm .v{
+  font-family:var(--display);font-weight:800;font-size:clamp(20px,5.4vw,26px);
+  line-height:1.15;letter-spacing:.01em;text-transform:uppercase;
+  background:var(--noir);color:var(--bone);border:1px solid rgba(244,236,224,.24);
+  padding:8px 16px;border-radius:12px;
 }
 .rev-hint{font-size:16px;color:var(--dim-2);text-align:center;max-width:28ch;margin-top:-8px}
 /* Every card looks the same from a step away. A red imposter card was
@@ -288,7 +304,12 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .pull span{font-size:15.5px;font-weight:700;letter-spacing:.01em}
 @keyframes pulse{0%,100%{transform:scale(1);opacity:.78}50%{transform:scale(1.04);opacity:1}}
 /* sentence case, not caps - word shape is a real reading cue */
-.word{font-family:var(--display);font-weight:800;font-size:clamp(36px,10.5vw,56px);line-height:1.02;letter-spacing:-.02em;color:var(--bone);overflow-wrap:break-word;hyphens:none}
+/* Blue is what you know about the secret. Everyone's word is blue; the
+   imposter's is missing, so the ? standing in its place is blue too - same
+   slot, same colour, and the gap is the whole of their problem. Their clue
+   is the same blue a step quieter, because it is the same kind of thing:
+   a smaller handle on the same secret. */
+.word{font-family:var(--display);font-weight:800;font-size:clamp(36px,10.5vw,56px);line-height:1.02;letter-spacing:-.02em;color:var(--player);overflow-wrap:break-word;hyphens:none}
 .cat-tag{
   font-family:var(--body);font-size:14px;font-weight:600;letter-spacing:.04em;
   color:var(--dim-2);
@@ -301,20 +322,6 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 /* the role is red again - but as a line of text, not a field of colour.
    a few letters cannot be read from across the table; a red card could. */
 .front .badge.imp{background:rgba(255,107,126,.13);border-color:var(--imp);color:var(--imp)}
-/* filled black rather than outlined in a hue - the imposter is red, an
-   ordinary player is blue, and blackmail is the one that is simply black */
-.front .badge.bm{background:var(--noir);border-color:rgba(244,236,224,.34);color:var(--bone)}
-/* the assignment: quiet label, loud word. the word is the whole instruction,
-   so it carries the weight and the label just introduces it. */
-.task{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:2px;max-width:26ch}
-.task span{font-size:15px;line-height:1.4;color:var(--dim-2)}
-/* the word to smuggle. bare, and the loudest thing under the secret word
-   itself - the black pill belongs to the badge, and two of them stacked
-   read as one element repeated rather than as instruction and label */
-.task b{
-  font-family:var(--display);font-weight:800;font-size:clamp(24px,6.6vw,32px);line-height:1.1;
-  letter-spacing:.005em;color:var(--bone);text-transform:uppercase;overflow-wrap:break-word;
-}
 
 /* ---- play ---- */
 .clock{font-family:var(--display);font-weight:800;font-size:clamp(64px,21vw,104px);line-height:.95;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
@@ -504,9 +511,11 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
         <div class="face front" id="front">
           <div class="word" id="front-word">—</div>
           <div class="cat-tag" id="front-cat"></div>
-          <div class="hint-line" id="front-hint"></div>
-          <div class="task" id="front-task" style="display:none">
-            <span id="task-label"></span><b id="task-word"></b>
+          <div class="info clue" id="front-hint" style="display:none">
+            <span class="lbl" id="clue-label"></span><b class="v" id="clue-word"></b>
+          </div>
+          <div class="info bm" id="front-task" style="display:none">
+            <span class="lbl" id="task-label"></span><b class="v" id="task-word"></b>
           </div>
           <div class="badge" id="front-badge">Word</div>
         </div>
@@ -592,7 +601,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "6.1";
+const APP_VERSION = "6.2";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list
@@ -694,8 +703,8 @@ vote_q_u:"Who had a different word?",govote:"Vote",skipvote:"Skip vote",
 vote:"Voting",vote_h:"Accuse before the reveal",vote_q:"Who is the imposter?",
 vote_note:"Everyone votes once",thevote:"the vote",
 caught:"Caught!",partial:"Half right",missed:"Got away!",
-bm:"Blackmailed",bm_h:"Honest, but must smuggle a word in",bm_badge:"Blackmail",
-bm_you:"Say this word during the round:",bm_imp:"Someone at the table must say:",
+bm:"Blackmailed",bm_h:"Honest, but must smuggle a word in",cluelbl:"Your clue:",
+bm_you:"You are blackmailed to say the word:",bm_imp:"Somebody is blackmailed to say:",
 thebm:"blackmailed",
 tableline:"pass-and-play · {n} players"},
 hr:{players:"Igrači",players_h:"Ide u krug",imposters:"Uljezi",imposters_h:"Manje od trećine stola",
@@ -718,8 +727,8 @@ vote_note:"Svatko glasa jednom",thevote:"glasovi",
 caught:"Ulovljeni!",partial:"Napola točno",missed:"Izvukli su se!",
 /* the badge is the noun, not the adjective - "ucijenjen/ucijenjena" would
    put a gender on whoever happens to be holding the phone */
-bm:"Ucijenjeni",bm_h:"Pošten je, ali mora ubaciti riječ",bm_badge:"Ucjena",
-bm_you:"Moraš reći ovu riječ u rundi:",bm_imp:"Netko za stolom mora reći:",
+bm:"Ucijenjeni",bm_h:"Pošten je, ali mora ubaciti riječ",cluelbl:"Tvoja natuknica:",
+bm_you:"Ucijenjen si da kažeš riječ:",bm_imp:"Netko je ucijenjen da kaže:",
 thebm:"ucijenjeni",
 tableline:"igra u krug · {n} igrača"}
 };
@@ -1067,15 +1076,15 @@ function paintSeat(){
   const isBm = S.bmSet.has(S.seat);
   const und = S.mode === "undercover";
   Peek.reset();
-  /* undercover: no role on the card at all. every seat sees a word and a
-     category and nothing else - the odd player is never told they are odd.
-     the one exception is a blackmailed seat, which has a job to be told
-     about. that leaks nothing: only they ever see their own card. */
-  $("#front-badge").style.display = und && !isBm ? "none" : "";
-  if(!und || isBm){
-    $("#front-badge").textContent = isBm ? t("bm_badge") : isImp ? t("imposter") : t("word");
-    $("#front-badge").classList.toggle("imp", isImp && !isBm);
-    $("#front-badge").classList.toggle("bm", isBm);
+  /* undercover: no role on any card at all - the odd player is never told
+     they are odd, and now that the blackmail speaks for itself in words
+     there is no seat left that needs a badge to explain it.
+     the badge names your side. blackmail is a job, not a side: a
+     blackmailed player is an ordinary player who has been handed one. */
+  $("#front-badge").style.display = und ? "none" : "";
+  if(!und){
+    $("#front-badge").textContent = isImp ? t("imposter") : t("word");
+    $("#front-badge").classList.toggle("imp", isImp);
   }
   const wordEl = $("#front-word");
   const shown = und ? (isImp ? S.twin : S.word) : (isImp ? "?" : S.word);
@@ -1083,8 +1092,10 @@ function paintSeat(){
   fitWord(wordEl, shown);
   /* all or nobody - showing it to the table leaked it to the imposter anyway */
   $("#front-cat").textContent = S.hintCat ? catLabel(S.catKey) : "";
-  const seesClue = !und && S.hintMode==="imposter" && isImp;
-  $("#front-hint").textContent = seesClue ? S.clue : "";
+  const seesClue = !und && S.hintMode==="imposter" && isImp && !!S.clue;
+  $("#front-hint").style.display = seesClue ? "" : "none";
+  $("#clue-label").textContent = seesClue ? t("cluelbl") : "";
+  $("#clue-word").textContent = seesClue ? S.clue : "";
   /* your own assignment if you are the one carrying it, or - if you are the
      imposter - the word you should be listening for. the imposter is told
      what, never who, so hearing it still leaves them a judgement to make.

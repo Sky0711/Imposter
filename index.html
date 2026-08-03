@@ -127,29 +127,14 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .field.stack{grid-template-columns:minmax(0,1fr)}
 .field.stack > :last-child{grid-column:1;grid-row:3;justify-self:stretch;margin-top:12px}
 
-/* Names and categories are set once and then never touched, so they fold
-   away behind a line that reports what they are set to. */
-.fold{
-  display:flex;align-items:center;gap:10px;width:100%;
-  padding:16px 4px;border-bottom:1px solid rgba(244,236,224,.10);
-  text-align:left;
-}
-.fold .chev{
-  font-size:22px;line-height:1;color:var(--dim);flex:none;width:14px;
-  transition:transform .18s ease;
-}
-.fold[aria-expanded="true"] .chev{transform:rotate(90deg)}
-.foldname{
+/* A heading over a run of rows that belong together - the imposter's
+   advantages, the names, the categories - so each row beneath can be
+   labelled short without repeating whose they are. */
+.grouphead{
   font-family:var(--body);font-size:13px;font-weight:600;letter-spacing:.06em;
-  text-transform:uppercase;color:var(--dim);flex:none;
+  text-transform:uppercase;color:var(--dim);
+  padding:22px 4px 6px;
 }
-.foldsum{
-  font-size:14.5px;font-weight:600;color:var(--accent);
-  margin-left:auto;text-align:right;min-width:0;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-}
-.fold:active{background:var(--velvet)}
-.names[hidden],.chips[hidden]{display:none}
 
 /* The button that starts the game rides along the foot of the screen, so a
    night where nothing changes costs no scrolling at all. The fade lets the
@@ -627,19 +612,36 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
       <div class="switch on" id="sw-vote"><i></i></div>
     </div>
 
-    <div class="field stack" id="f-bira">
-      <div><div class="label" data-t="impadv">Imposter advantages</div><div class="hint" data-t="impadv_h">What the imposter gets to choose</div></div>
-      <div class="chips" id="chips-bira"></div>
-    </div>
-
     <div class="field" id="f-suggest">
       <div><div class="label" data-t="suggest">Offer a word</div><div class="hint" data-t="suggest_h">Keep it, or clear it and write your own</div></div>
       <div class="switch" id="sw-suggest"><i></i></div>
     </div>
 
-    <div class="field stack" id="f-sees">
-      <div><div class="label" data-t="impsees">Imposter sees</div><div class="hint" data-t="impsees_h">What they get beside the question mark</div></div>
-      <div class="chips" id="chips-sees"></div>
+    <div class="grouphead" id="head-adv" data-t="impadv">Imposter advantages</div>
+
+    <div class="field" id="f-hintcat">
+      <div><div class="label" data-t="a_cat">Sees the category</div><div class="hint" data-t="a_cat_h">Narrows it down for them</div></div>
+      <div class="switch on" id="sw-hint"><i></i></div>
+    </div>
+
+    <div class="field" id="f-hintw">
+      <div><div class="label" data-t="a_clue">Sees a clue</div><div class="hint" data-t="a_clue_h">One clue per word, only for them</div></div>
+      <div class="switch on" id="sw-hintw"><i></i></div>
+    </div>
+
+    <div class="field" id="f-bmimp">
+      <div><div class="label" data-t="a_bm">Sees the blackmail</div><div class="hint" data-t="a_bm_h">Knows the word to listen for</div></div>
+      <div class="switch on" id="sw-bmimp"><i></i></div>
+    </div>
+
+    <div class="field" id="f-bmpick">
+      <div><div class="label" data-t="a_who">Picks who says it</div><div class="hint" data-t="a_who_h">Otherwise it lands at random</div></div>
+      <div class="switch" id="sw-bmpick"><i></i></div>
+    </div>
+
+    <div class="field" id="f-bmwhen">
+      <div><div class="label" data-t="a_when">Picks the round</div><div class="hint" data-t="a_when_h">Which round the word is due</div></div>
+      <div class="switch" id="sw-bmwhen"><i></i></div>
     </div>
 
     <div class="field stack" id="f-hstyle">
@@ -656,20 +658,12 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
       </div>
     </div>
 
-    <button class="fold" id="fold-names" aria-expanded="false">
-      <span class="chev">›</span>
-      <span class="foldname" data-t="names">Names</span>
-      <span class="foldsum" id="sum-names"></span>
-    </button>
-    <div class="names" id="names" hidden></div>
+    <div class="grouphead" data-t="names">Names</div>
+    <div class="names" id="names"></div>
 
     <div id="f-cats">
-      <button class="fold" id="fold-cats" aria-expanded="false">
-        <span class="chev">›</span>
-        <span class="foldname" data-t="category">Category</span>
-        <span class="foldsum" id="sum-cats"></span>
-      </button>
-      <div class="chips" id="chips" hidden></div>
+      <div class="grouphead" data-t="category">Category</div>
+      <div class="chips" id="chips"></div>
     </div>
 
     <div class="dealbar">
@@ -823,7 +817,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "8.6";
+const APP_VERSION = "8.7";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list
@@ -920,7 +914,7 @@ hintw:"Imposter sees clue",hintw_h:"One clue, only for them",everyone:"Everyone"
 mode:"Game mode",mode_h:"Three ways to play",
 md_classic:"Everyone gets the same word. The imposter gets nothing.",
 md_undercover:"One word is slightly different, and nobody is told whose.",
-md_conspiracy:"You write the words. The imposter plants one for somebody else to say.",m_classic:"Classic",m_undercover:"Undercover",m_conspiracy:"Conspiracy",
+md_conspiracy:"Players write words. The imposter plants a blackmail.",m_classic:"Classic",m_undercover:"Undercover",m_conspiracy:"Conspiracy",
 hstyle:"Clue style",hstyle_h:"Only in categories marked +",
 hs_simple:"Simple",hs_niche:"Niche",hs_long:"Long",hs_random:"Mix",
 mostyou:"most of you had",allhad:"everyone had",oddword:"the odd word",oddone:"the odd one out",
@@ -936,9 +930,12 @@ ask_to:"Who says it",ask_when:"At round",
 preset:"Already chosen — touch it only if you want it different.",
 tooshort:"A word needs at least two letters.",
 dupword:"Two of your words are the same — make one different.",
-impsees:"Imposter sees",impsees_h:"What they get beside the question mark",
-impadv:"Imposter advantages",impadv_h:"What the imposter gets to choose",
-f_cat:"Category",f_clue:"Clue",f_bm:"Blackmail",f_who:"Picks who",f_when:"Picks the round",
+impadv:"Imposter advantages",
+a_cat:"Sees the category",a_cat_h:"Narrows it down for them",
+a_clue:"Sees a clue",a_clue_h:"One clue per word, only for them",
+a_bm:"Sees the blackmail",a_bm_h:"Knows the word to listen for",
+a_who:"Picks who says it",a_who_h:"Otherwise it lands at random",
+a_when:"Picks the round",a_when_h:"Which round the word is due",
 nonames:"none yet",suggest:"Offer a word",suggest_h:"Keep it, or clear it and write your own",clearw:"clear",
 bmwhen:"Imposter picks the round",bmwhen_h:"Which round the word is due",
 inround:"at round {n}",wready:"Add your word",note_write:"Nobody else looks.",
@@ -961,7 +958,7 @@ hintw:"Uljez vidi natuknicu",hintw_h:"Jedna natuknica po riječi",everyone:"Svi"
 mode:"Način igre",mode_h:"Tri načina igre",
 md_classic:"Svi dobiju istu riječ. Uljez ne dobije ništa.",
 md_undercover:"Jedna riječ je malo drukčija, a nitko ne zna čija.",
-md_conspiracy:"Vi pišete riječi. Uljez podmeće svoju da je netko drugi kaže.",m_classic:"Klasik",m_undercover:"Druga riječ",m_conspiracy:"Zavjera",
+md_conspiracy:"Igrači pišu riječi. Uljez podmeće ucjenu.",m_classic:"Klasik",m_undercover:"Druga riječ",m_conspiracy:"Zavjera",
 hstyle:"Vrsta natuknice",hstyle_h:"Samo u kategorijama s +",
 hs_simple:"Laka",hs_niche:"Znalačka",hs_long:"Duga",hs_random:"Mix",
 mostyou:"većina je imala",allhad:"svi su imali",oddword:"druga riječ",oddone:"tko je imao drugu",
@@ -979,9 +976,12 @@ ask_to:"Tko je govori",ask_when:"U kojem krugu",
 preset:"Već je odabrano — diraj samo ako želiš drukčije.",
 tooshort:"Riječ mora imati barem dva slova.",
 dupword:"Dvije iste riječi — napiši drukčiju.",
-impsees:"Uljez vidi",impsees_h:"Što dobiva uz upitnik",
-impadv:"Prednosti uljeza",impadv_h:"Što uljez smije birati",
-f_cat:"Kategoriju",f_clue:"Natuknicu",f_bm:"Ucjenu",f_who:"Bira kome",f_when:"Bira krug",
+impadv:"Prednosti uljeza",
+a_cat:"Vidi kategoriju",a_cat_h:"Suzi mu izbor",
+a_clue:"Vidi natuknicu",a_clue_h:"Jedna natuknica po riječi",
+a_bm:"Vidi ucjenu",a_bm_h:"Zna koju riječ čekati",
+a_who:"Bira kome ide",a_who_h:"Inače ide nasumično",
+a_when:"Bira krug",a_when_h:"U kojem krugu riječ mora pasti",
 nonames:"nema ih",suggest:"Ponudi riječ",suggest_h:"Ostavi ju ili obriši i napiši svoju",clearw:"obriši",
 bmwhen:"Uljez bira kad",bmwhen_h:"U kojem krugu riječ mora pasti",
 inround:"u {n}. krugu",wready:"Dodaj riječ",note_write:"Nitko drugi ne gleda.",
@@ -995,7 +995,7 @@ tableline:"igra u krug · {n} igrača"}
 
 /* ============ state ============ */
 /* cats: which categories are in play. empty means all of them. */
-const S = {players:4, imposters:1, blackmail:0, randImp:false, randBm:false, touched:"", bmImp:true, bmPick:false, bmWhen:false, suggest:false, openNames:false, openCats:false, minutes:4, hintCat:true, hintMode:"imposter", hintStyle:"simple", vote:true, mode:"classic", lang:"hr", cats:[], names:[],
+const S = {players:4, imposters:1, blackmail:0, randImp:false, randBm:false, touched:"", bmImp:true, bmPick:false, bmWhen:false, suggest:false, minutes:4, hintCat:true, hintMode:"imposter", hintStyle:"simple", vote:true, mode:"classic", lang:"hr", cats:[], names:[],
            word:"", twin:"", clue:"", catKey:"", impSet:new Set(), bmSet:new Set(), bmWords:{},
            /* conspiracy: what each seat wrote, and what each imposter planted */
            pool:{}, plants:{}, bmRound:{}, offered:[], wseat:1,
@@ -1017,7 +1017,7 @@ function save(){
     localStorage.setItem(SAVE_KEY, JSON.stringify({
       players:S.players, imposters:S.imposters, blackmail:S.blackmail,
       randImp:S.randImp, randBm:S.randBm, minutes:S.minutes,
-      hintCat:S.hintCat, hintMode:S.hintMode, hintStyle:S.hintStyle, bmImp:S.bmImp, bmPick:S.bmPick, bmWhen:S.bmWhen, suggest:S.suggest, openNames:S.openNames, openCats:S.openCats, vote:S.vote, mode:S.mode, lang:S.lang, cats:S.cats,
+      hintCat:S.hintCat, hintMode:S.hintMode, hintStyle:S.hintStyle, bmImp:S.bmImp, bmPick:S.bmPick, bmWhen:S.bmWhen, suggest:S.suggest, vote:S.vote, mode:S.mode, lang:S.lang, cats:S.cats,
       names:S.names.slice(0,16)
     }));
   }catch(e){}
@@ -1046,8 +1046,6 @@ function load(){
     if(typeof d.bmPick === "boolean") S.bmPick = d.bmPick;
     if(typeof d.bmWhen === "boolean") S.bmWhen = d.bmWhen;
     if(typeof d.suggest === "boolean") S.suggest = d.suggest;
-    if(typeof d.openNames === "boolean") S.openNames = d.openNames;
-    if(typeof d.openCats === "boolean") S.openCats = d.openCats;
     if(["classic","undercover","conspiracy"].indexOf(d.mode) >= 0) S.mode = d.mode;
     if(["simple","niche","long","random"].indexOf(d.hintStyle) >= 0) S.hintStyle = d.hintStyle;
     /* "all" was dropped as an option - fold old saves onto imposter-only */
@@ -1225,9 +1223,6 @@ function paintSetup(){
   /* a lit die is the only thing either line has left to explain */
   if(S.randImp) $("#h-imposters").textContent = t("upto_h");
   if(S.randBm)  $("#h-blackmail").textContent = t("upto_h");
-  /* after paintText too: the fold labels are [data-t] and the summaries sit
-     in the same row, so both have to be written once the table has had its say */
-  paintFolds();
   save();
 }
 
@@ -1254,59 +1249,23 @@ function paintNames(){
   Array.from(box.querySelectorAll("input")).forEach(inp=>{ inp.placeholder = t("nameph"); });
 }
 
-/* The flags that used to be a switch each. Same booleans, one row instead of
-   five - they were always one question, so they now look like one. */
+/* The imposter's advantages, one switch each under a heading that says whose
+   they are - so the labels can stay short and none of them repeats "imposter".
+   Which ones a mode offers is the same rule as ever: no category or clues in
+   conspiracy, no clue at all in undercover, and only conspiracy lets the
+   imposter choose anything. */
 function paintFlags(){
   const und = S.mode === "undercover", con = S.mode === "conspiracy";
-  const mk = (box, label, on, toggle)=>{
-    const b = document.createElement("button");
-    b.className = "chip" + (on ? " on" : "");
-    b.textContent = label;
-    b.onclick = ()=>{ toggle(); buzz(10); paintSetup(); };
-    box.appendChild(b);
-  };
-  /* what the imposter is handed. no category and no clues in conspiracy, and
-     no clue at all in undercover, so the row shrinks to what that mode has */
-  const sees = $("#chips-sees"); sees.innerHTML = "";
-  $("#f-sees").style.display = con ? "none" : "";
-  if(!con){
-    mk(sees, t("f_cat"),  S.hintCat, ()=>{ S.hintCat = !S.hintCat; });
-    if(!und){
-      mk(sees, t("f_clue"), S.hintMode === "imposter",
-         ()=>{ S.hintMode = S.hintMode === "imposter" ? "off" : "imposter"; });
-      mk(sees, t("f_bm"),   S.bmImp, ()=>{ S.bmImp = !S.bmImp; });
-    }
-  }
-  /* and what they get to choose, which only conspiracy asks */
-  const bira = $("#chips-bira"); bira.innerHTML = "";
-  $("#f-bira").style.display = con ? "" : "none";
-  if(con){
-    mk(bira, t("f_who"),  S.bmPick, ()=>{ S.bmPick = !S.bmPick; });
-    mk(bira, t("f_when"), S.bmWhen, ()=>{ S.bmWhen = !S.bmWhen; });
-  }
-}
-
-/* a folded block reports what it is set to, so it can stay shut */
-function paintFolds(){
-  const fold = (btn, box, open, sum)=>{
-    $(btn).setAttribute("aria-expanded", open ? "true" : "false");
-    $(box).hidden = !open;
-    $(sum).textContent = open ? "" : sum === "#sum-names" ? namesSummary() : catsSummary();
-  };
-  fold("#fold-names", "#names", S.openNames, "#sum-names");
-  fold("#fold-cats",  "#chips", S.openCats,  "#sum-cats");
-}
-function namesSummary(){
-  const got = [];
-  for(let i=1;i<=S.players;i++){ const n = nameOf(i); if(n) got.push(n); }
-  if(!got.length) return t("nonames");
-  return got.slice(0,3).join(", ") + (got.length > 3 ? " +" + (got.length-3) : "");
-}
-function catsSummary(){
-  const avail = catsFor();
-  const picked = S.cats.filter(k=>avail.some(c=>c.key===k));
-  if(!picked.length) return t("mix");
-  return picked.map(k=>{ const c = CATS.find(x=>x.key===k); return c ? c[S.lang] : k; }).join(", ");
+  $("#sw-hint").classList.toggle("on", S.hintCat);
+  $("#sw-hintw").classList.toggle("on", S.hintMode === "imposter");
+  $("#sw-bmimp").classList.toggle("on", S.bmImp);
+  $("#sw-bmpick").classList.toggle("on", S.bmPick);
+  $("#sw-bmwhen").classList.toggle("on", S.bmWhen);
+  $("#f-hintcat").style.display = con ? "none" : "";
+  $("#f-hintw").style.display   = (und || con) ? "none" : "";
+  $("#f-bmimp").style.display   = (und || con) ? "none" : "";
+  $("#f-bmpick").style.display  = con ? "" : "none";
+  $("#f-bmwhen").style.display  = con ? "" : "none";
 }
 
 function paintChips(){
@@ -2210,8 +2169,11 @@ $$(".diebtn").forEach(b=>{
 });
 /* every setting answers with a short buzz, so a tap is felt as well as seen */
 $("#sw-vote").onclick  = ()=>{ S.vote = !S.vote; buzz(14); paintSetup(); };
-$("#fold-names").onclick = ()=>{ S.openNames = !S.openNames; buzz(10); paintSetup(); };
-$("#fold-cats").onclick  = ()=>{ S.openCats  = !S.openCats;  buzz(10); paintSetup(); };
+$("#sw-hint").onclick   = ()=>{ S.hintCat = !S.hintCat; buzz(14); paintSetup(); };
+$("#sw-hintw").onclick  = ()=>{ S.hintMode = S.hintMode==="imposter" ? "off" : "imposter"; buzz(14); paintSetup(); };
+$("#sw-bmimp").onclick  = ()=>{ S.bmImp = !S.bmImp; buzz(14); paintSetup(); };
+$("#sw-bmpick").onclick = ()=>{ S.bmPick = !S.bmPick; buzz(14); paintSetup(); };
+$("#sw-bmwhen").onclick = ()=>{ S.bmWhen = !S.bmWhen; buzz(14); paintSetup(); };
 $("#sw-suggest").onclick = ()=>{ S.suggest = !S.suggest; buzz(14); paintSetup(); };
 $$("#seg-lang button").forEach(b=>{
   b.onclick = ()=>{ S.lang = b.dataset.lang; buzz(10); paintSetup(); };

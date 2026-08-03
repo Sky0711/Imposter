@@ -530,6 +530,11 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
       </div>
     </div>
 
+    <div class="field" id="f-bmpick">
+      <div><div class="label" data-t="bmpick">Imposter picks the target</div><div class="hint" data-t="bmpick_h">Otherwise it lands at random</div></div>
+      <div class="switch" id="sw-bmpick"><i></i></div>
+    </div>
+
     <div class="field">
       <div><div class="label" data-t="timer">Round timer</div><div class="hint" data-t="timer_h">Minutes of arguing. 0 turns it off.</div></div>
       <div class="stepper" data-step="minutes">
@@ -550,11 +555,6 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
     <div class="field" id="f-hintw">
       <div><div class="label" data-t="hintw">Imposter sees clue</div><div class="hint" data-t="hintw_h">One clue per word, only for them</div></div>
       <div class="switch on" id="sw-hintw"><i></i></div>
-    </div>
-
-    <div class="field" id="f-bmpick">
-      <div><div class="label" data-t="bmpick">Imposter picks the target</div><div class="hint" data-t="bmpick_h">Otherwise it lands at random</div></div>
-      <div class="switch" id="sw-bmpick"><i></i></div>
     </div>
 
     <div class="field" id="f-bmimp">
@@ -732,7 +732,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "7.1";
+const APP_VERSION = "7.2";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list

@@ -213,6 +213,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
    the setting it refers to read as one thing. after .chip.on on purpose -
    the plus keeps its blue even while the chip is selected and gone gold. */
 .chip .plus{color:var(--player);font-weight:800;font-size:17px;margin-left:6px}
+.hint .plus{color:var(--player);font-weight:800}
 /* the row's own name carries the blue too, so the whole setting - label,
    buttons and the marks it points at - is one colour across the screen */
 #f-hstyle .label{color:var(--player)}
@@ -547,7 +548,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
     <div class="field">
       <div>
-        <div class="label"><span class="tint-imp" data-t="imposters">Imposters</span><button class="diebtn" id="d-imposters" data-rnd="randImp"><svg class="die" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.6" y="2.6" width="18.8" height="18.8" rx="5.2" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="8.4" cy="8.4" r="2.2"/><circle cx="12" cy="12" r="2.2"/><circle cx="15.6" cy="15.6" r="2.2"/></svg></button></div>
+        <div class="label"><span class="tint-imp" data-t="imposters">Imposters</span><button class="diebtn" id="d-imposters" data-rnd="randImp"><svg class="die" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.6" y="2.6" width="18.8" height="18.8" rx="5.2" fill="none" stroke="currentColor" stroke-width="1.7"/><g class="pips"></g></svg></button></div>
         <div class="hint" id="h-imposters" data-t="imposters_h">Pretends to know the word</div>
       </div>
       <div class="stepper" data-step="imposters" id="st-imposters">
@@ -557,7 +558,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
     <div class="field" id="f-blackmail">
       <div>
-        <div class="label"><span class="tint-bm" id="lbl-blackmail" data-t="bm">Blackmailed</span><button class="diebtn" id="d-blackmail" data-rnd="randBm"><svg class="die" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.6" y="2.6" width="18.8" height="18.8" rx="5.2" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="8.4" cy="8.4" r="2.2"/><circle cx="12" cy="12" r="2.2"/><circle cx="15.6" cy="15.6" r="2.2"/></svg></button></div>
+        <div class="label"><span class="tint-bm" id="lbl-blackmail" data-t="bm">Blackmailed</span><button class="diebtn" id="d-blackmail" data-rnd="randBm"><svg class="die" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.6" y="2.6" width="18.8" height="18.8" rx="5.2" fill="none" stroke="currentColor" stroke-width="1.7"/><g class="pips"></g></svg></button></div>
         <div class="hint" id="h-blackmail" data-t="bm_h">Honest, but must smuggle a word in</div>
       </div>
       <div class="stepper" data-step="blackmail">
@@ -608,7 +609,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
     </div>
 
     <div class="field" id="f-hstyle">
-      <div><div class="label" data-t="hstyle">Clue style</div><div class="hint" data-t="hstyle_h">How the imposter's clue reads</div></div>
+      <div><div class="label" data-t="hstyle">Clue style</div><div class="hint" id="h-hstyle" data-t="hstyle_h">How the imposter's clue reads</div></div>
       <div class="seg" id="seg-hstyle">
         <button data-hs="simple">Simple</button><button data-hs="niche">Niche</button><button data-hs="long">Long</button><button data-hs="random">Mix</button>
       </div>
@@ -781,7 +782,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "7.9";
+const APP_VERSION = "8.0";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list
@@ -1063,6 +1064,32 @@ function paintText(){
   $("#btn-pause").textContent = S.running ? t("pause") : t("resume");
 }
 
+/* The face a die shows for a given count. Standard layouts, and it stops at
+   six the way a die does - past that the number beside it carries the count
+   and the face just means "a lot". Zero shows a blank face: there is no side
+   of a die with nothing on it, which is the point. */
+const PIPS = {
+  0:[],
+  1:[[12,12]],
+  2:[[8,8],[16,16]],
+  3:[[8,8],[12,12],[16,16]],
+  4:[[8,8],[16,8],[8,16],[16,16]],
+  5:[[8,8],[16,8],[12,12],[8,16],[16,16]],
+  6:[[8,7.4],[16,7.4],[8,12],[16,12],[8,16.6],[16,16.6]]
+};
+function paintDie(dieSel, n){
+  const g = $(dieSel).querySelector(".pips");
+  if(!g) return;
+  const face = Math.max(0, Math.min(6, n));
+  while(g.firstChild) g.removeChild(g.firstChild);
+  PIPS[face].forEach(pt => {
+    const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    c.setAttribute("cx", pt[0]); c.setAttribute("cy", pt[1]);
+    c.setAttribute("r", face > 3 ? 1.95 : 2.2);
+    g.appendChild(c);
+  });
+}
+
 /* a stepper's number: the count itself, and whether it is a ceiling.
    "≤0" says nothing that "0" does not, so the prefix is dropped there -
    but the die keeps reporting the setting truthfully, or tapping it at
@@ -1072,6 +1099,7 @@ function paintCount(sel, dieSel, n, rnd){
   el.textContent = rnd && n > 0 ? "≤" + n : n;
   el.classList.toggle("rand", rnd);
   const die = $(dieSel);
+  paintDie(dieSel, n);
   die.classList.toggle("on", rnd);
   die.setAttribute("aria-pressed", rnd ? "true" : "false");
   die.setAttribute("aria-label", t("upto"));
@@ -1138,6 +1166,17 @@ function paintSetup(){
      element straight from the table and would put the stock wording back. */
   /* the line under the tabs says what the mode you just picked actually does */
   $("#h-mode").textContent = t("md_" + S.mode);
+  /* the + in this line is the same mark the category chips carry, so it wears
+     the same blue - assembled as nodes, since the sentence comes from the
+     string table and paintText has just written it back as flat text */
+  (function(){
+    const el = $("#h-hstyle");
+    el.textContent = "";
+    t("hstyle_h").split("+").forEach((part, i) => {
+      if(i){ const b = document.createElement("span"); b.className = "plus"; b.textContent = "+"; el.appendChild(b); }
+      el.appendChild(document.createTextNode(part));
+    });
+  })();
   /* in conspiracy the count row counts something else - not how many seats
      are blackmailed, but how many words each imposter plants */
   $("#lbl-blackmail").textContent = t(con ? "bmeach" : "bm");
@@ -1406,23 +1445,19 @@ function paintWrite(){
     inp.spellcheck = false; inp.setAttribute("enterkeyhint","done");
     inp.placeholder = t("wordph");         /* blank: never the last seat's word */
     inp.oninput = ()=>{
-      delete inp.dataset.offered;
       inp.classList.remove("bad"); $("#write-err").textContent = "";
       paintWriteReady();
     };
-    if(S.suggest){
-      inp.value = drawSuggestion();
-      /* still the app's word until they touch it: tapping in selects the lot,
-         so the first letter they type replaces it rather than joining it */
-      if(inp.value) inp.dataset.offered = "1";
-      inp.onfocus = ()=>{ if(inp.dataset.offered) inp.select(); };
-    }
+    /* Offered, and then left alone. Selecting the whole field on focus meant
+       a tap to fix one letter wiped the lot, and the × beside it already
+       empties the field in one press. */
+    if(S.suggest) inp.value = drawSuggestion();
     wrap.appendChild(inp);
     const clr = document.createElement("button");
     clr.type = "button"; clr.className = "wclear"; clr.textContent = "×";
     clr.setAttribute("aria-label", t("clearw"));
     clr.onclick = ()=>{
-      delete inp.dataset.offered; inp.value = "";
+      inp.value = "";
       inp.classList.remove("bad"); $("#write-err").textContent = "";
       inp.focus(); buzz(10); paintWriteReady();
     };

@@ -781,7 +781,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "7.8";
+const APP_VERSION = "7.9";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list
@@ -893,6 +893,7 @@ bmpick:"Imposter picks the target",bmpick_h:"Otherwise it lands at random",
 ask_to:"Who says it",ask_when:"At round",
 preset:"Already chosen — touch it only if you want it different.",
 tooshort:"A word needs at least two letters.",
+dupword:"Two of your words are the same — make one different.",
 suggest:"Offer a word",suggest_h:"Keep it, or clear it and write your own",clearw:"clear",
 bmwhen:"Imposter picks the round",bmwhen_h:"Which round the word is due",
 inround:"at round {n}",wready:"Add your word",note_write:"Nobody else looks.",
@@ -932,6 +933,7 @@ bmpick:"Uljez bira kome",bmpick_h:"Inače ide nasumično",
 ask_to:"Tko je govori",ask_when:"U kojem krugu",
 preset:"Već je odabrano — diraj samo ako želiš drukčije.",
 tooshort:"Riječ mora imati barem dva slova.",
+dupword:"Dvije iste riječi — napiši drukčiju.",
 suggest:"Ponudi riječ",suggest_h:"Ostavi ju ili obriši i napiši svoju",clearw:"obriši",
 bmwhen:"Uljez bira kad",bmwhen_h:"U kojem krugu riječ mora pasti",
 inround:"u {n}. krugu",wready:"Dodaj riječ",note_write:"Nitko drugi ne gleda.",
@@ -1535,6 +1537,23 @@ function takeWrite(){
   });
   if(short){
     $("#write-err").textContent = t("tooshort");
+    buzz([40,60,40]);
+    return false;
+  }
+  /* The same word twice is worth less than one of it, whichever seat wrote
+     it. Planted twice it is one blackmail wasted and two mouths saying the
+     same odd thing; written twice it is half a contribution to the pool and
+     a doubled chance of your own word being the one drawn. One rule for
+     everyone, so nothing about the check depends on who is holding it. */
+  const seen = {};
+  let dup = false;
+  rows.forEach(r => {
+    const inp = r.querySelector("input"), k = inp.value.trim().toLocaleLowerCase();
+    if(seen[k]){ inp.classList.add("bad"); seen[k].classList.add("bad"); dup = true; }
+    else seen[k] = inp;
+  });
+  if(dup){
+    $("#write-err").textContent = t("dupword");
     buzz([40,60,40]);
     return false;
   }

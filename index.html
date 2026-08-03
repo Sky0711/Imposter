@@ -134,11 +134,23 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 }
 .stepper button:active{background:var(--velvet-2)}
 .stepper.locked button{opacity:.28;pointer-events:none}
-.stepper .val.rand{color:var(--accent)}
+/* the number is a control in its own right: tap it and an exact count
+   becomes "up to that many". dashed while it is exact, so it reads as
+   something you may press rather than a label; solid and in the mode's
+   colour once it is a ceiling, matching the ≤ it now carries. each
+   stepper owns its own setting - a fixed imposter count can sit beside
+   a secret number of blackmailed, which one shared switch could not do. */
 .stepper .val{
   font-family:var(--display);font-weight:800;font-size:23px;min-width:50px;text-align:center;
   line-height:1;
 }
+/* only where it is a button - players and the clock are plain readouts and
+   must not borrow an affordance they do not have */
+.stepper button.val{
+  width:auto;min-width:58px;height:50px;padding:0 9px;border-radius:14px;
+  background:transparent;border:1px dashed rgba(244,236,224,.24);color:var(--bone);
+}
+.stepper button.val.rand{color:var(--accent);border:1.5px solid var(--accent)}
 .switch{
   width:56px;height:32px;border-radius:20px;background:var(--velvet);
   border:1px solid rgba(244,236,224,.12);position:relative;flex:none;transition:background .18s ease;
@@ -393,22 +405,17 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
     </div>
 
     <div class="field">
-      <div><div class="label" data-t="imposters">Imposters</div><div class="hint" data-t="imposters_h">Keep it under a third of the table</div></div>
+      <div><div class="label" data-t="imposters">Imposters</div><div class="hint" id="h-imposters" data-t="imposters_h">Keep it under a third of the table</div></div>
       <div class="stepper" data-step="imposters" id="st-imposters">
-        <button data-d="-1" aria-label="fewer">−</button><div class="val" id="v-imposters">1</div><button data-d="1" aria-label="more">+</button>
+        <button data-d="-1" aria-label="fewer">−</button><button class="val" id="v-imposters" data-rnd="randImp">1</button><button data-d="1" aria-label="more">+</button>
       </div>
     </div>
 
     <div class="field" id="f-blackmail">
-      <div><div class="label" data-t="bm">Blackmailed</div><div class="hint" data-t="bm_h">Honest, but must smuggle a word in</div></div>
+      <div><div class="label" data-t="bm">Blackmailed</div><div class="hint" id="h-blackmail" data-t="bm_h">Honest, but must smuggle a word in</div></div>
       <div class="stepper" data-step="blackmail">
-        <button data-d="-1" aria-label="fewer">−</button><div class="val" id="v-blackmail">0</div><button data-d="1" aria-label="more">+</button>
+        <button data-d="-1" aria-label="fewer">−</button><button class="val" id="v-blackmail" data-rnd="randBm">0</button><button data-d="1" aria-label="more">+</button>
       </div>
-    </div>
-
-    <div class="field">
-      <div><div class="label" data-t="rand">Random count</div><div class="hint" data-t="rand_h">Up to that many. Could be none.</div></div>
-      <div class="switch" id="sw-rand"><i></i></div>
     </div>
 
     <div class="field">
@@ -566,7 +573,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "5.7";
+const APP_VERSION = "5.8";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list
@@ -656,7 +663,7 @@ lang:"Language",lang_h:"Word list",category:"Category",deal:"Start the game",han
 note_peek:"Nobody else looks.",next:"Next player",inplay:"round in play",firstup:"First to describe",
 cat_public:"Category",pause:"Pause",resume:"Resume",reveal:"Reveal",theword:"the word was",theimposter:"the imposter",
 settings:"Settings",again:"Next round",mix:"All",player:"Player",word:"Player",imposter:"You are the imposter",
-rand:"Random count",rand_h:"Up to that many. Could be none.",
+upto_h:"Up to that many. Could be none.",
 tagline:"Everyone gets the same secret word. Someone doesn't. Find out who.",
 start:"Start the round",noone:"Nobody",time:"Time",names:"Names",nameph:"Name (optional)",
 hintw:"Imposter sees clue",hintw_h:"One clue, only for them",everyone:"Everyone",
@@ -678,7 +685,7 @@ lang:"Jezik",lang_h:"Popis riječi",category:"Kategorija",deal:"Pokreni igru",ha
 note_peek:"Nitko drugi ne gleda.",next:"Sljedeći igrač",inplay:"runda u tijeku",firstup:"Prvi opisuje",
 cat_public:"Kategorija",pause:"Pauza",resume:"Nastavi",reveal:"Otkrij",theword:"riječ je bila",theimposter:"uljez",
 settings:"Postavke",again:"Nova runda",mix:"Sve",player:"Igrač",word:"Igrač",imposter:"Ti si uljez",
-rand:"Nasumičan broj",rand_h:"Najviše toliko. Može i nijedan.",
+upto_h:"Najviše toliko. Može i nijedan.",
 tagline:"Svi dobiju istu tajnu riječ. Netko ne. Otkrijte tko.",
 start:"Kreni s rundom",noone:"Nitko",time:"Vrijeme",names:"Imena",nameph:"Ime (nije obavezno)",
 hintw:"Uljez vidi natuknicu",hintw_h:"Jedna natuknica po riječi",everyone:"Svi",
@@ -700,7 +707,7 @@ tableline:"igra u krug · {n} igrača"}
 
 /* ============ state ============ */
 /* cats: which categories are in play. empty means all of them. */
-const S = {players:4, imposters:1, blackmail:0, rand:false, minutes:4, hintCat:true, hintMode:"imposter", hintStyle:"simple", vote:true, mode:"classic", lang:"hr", cats:[], names:[],
+const S = {players:4, imposters:1, blackmail:0, randImp:false, randBm:false, minutes:4, hintCat:true, hintMode:"imposter", hintStyle:"simple", vote:true, mode:"classic", lang:"hr", cats:[], names:[],
            word:"", twin:"", clue:"", catKey:"", impSet:new Set(), bmSet:new Set(), bmWords:{},
            votes:null, seat:1, first:1, left:0, timer:null, running:false};
 
@@ -718,7 +725,8 @@ const SAVE_KEY = "imposter.setup.v1";
 function save(){
   try{
     localStorage.setItem(SAVE_KEY, JSON.stringify({
-      players:S.players, imposters:S.imposters, blackmail:S.blackmail, rand:S.rand, minutes:S.minutes,
+      players:S.players, imposters:S.imposters, blackmail:S.blackmail,
+      randImp:S.randImp, randBm:S.randBm, minutes:S.minutes,
       hintCat:S.hintCat, hintMode:S.hintMode, hintStyle:S.hintStyle, vote:S.vote, mode:S.mode, lang:S.lang, cats:S.cats,
       names:S.names.slice(0,16)
     }));
@@ -734,9 +742,13 @@ function load(){
     if(num(d.players))   S.players   = d.players;
     /* pre-4.2 saves used -1 to mean "secret count"; it now means "up to 1" */
     if(num(d.imposters)) S.imposters = d.imposters === -1 ? 1 : d.imposters;
-    if(d.imposters === -1) S.rand = true;
+    if(d.imposters === -1) S.randImp = true;
     if(num(d.blackmail)) S.blackmail = d.blackmail;
-    if(typeof d.rand === "boolean") S.rand = d.rand;
+    /* one switch used to govern both counts; a save from then means the
+       table wanted both secret, so carry it onto both */
+    if(typeof d.rand === "boolean"){ S.randImp = d.rand; S.randBm = d.rand; }
+    if(typeof d.randImp === "boolean") S.randImp = d.randImp;
+    if(typeof d.randBm === "boolean") S.randBm = d.randBm;
     if(num(d.minutes))   S.minutes   = d.minutes;
     if(typeof d.hintCat === "boolean") S.hintCat = d.hintCat;
     if(typeof d.vote === "boolean") S.vote = d.vote;
@@ -759,13 +771,13 @@ function clamp(){
   /* a fixed count stays under half the table, or the game is not worth
      playing. a ceiling may go all the way up - it is a maximum, not a
      promise, so "up to everyone" is a legitimate thing to ask for. */
-  const maxImp = S.rand ? S.players : Math.max(1, Math.floor((S.players-1)/2));
+  const maxImp = S.randImp ? S.players : Math.max(1, Math.floor((S.players-1)/2));
   S.imposters = Math.max(1, Math.min(maxImp, S.imposters));
   /* the blackmailed are honest players, so they cost the table less than an
      imposter does - but between them they still must not outnumber the seats
      playing it straight. a ceiling, again, may reach as far as it likes. */
-  const maxBm = S.rand ? Math.max(0, S.players - S.imposters)
-                       : Math.max(0, Math.floor(S.players/2) - S.imposters);
+  const maxBm = S.randBm ? Math.max(0, S.players - S.imposters)
+                         : Math.max(0, Math.floor(S.players/2) - S.imposters);
   S.blackmail = Math.max(0, Math.min(maxBm, S.blackmail));
 }
 
@@ -775,18 +787,23 @@ function paintText(){
   $("#btn-pause").textContent = S.running ? t("pause") : t("resume");
 }
 
+/* a stepper's number: the count itself, and whether it is a ceiling */
+function paintCount(sel, n, rnd){
+  const el = $(sel);
+  el.textContent = rnd ? "≤" + n : n;
+  el.classList.toggle("rand", rnd);
+  el.setAttribute("aria-pressed", rnd ? "true" : "false");
+}
+
 function paintSetup(){
   clamp();
   /* the mode cannot change mid-round, so setting it here carries through
      the deal, the vote and the reveal */
   document.documentElement.dataset.mode = S.mode;
   $("#v-players").textContent = S.players;
-  const rnd = S.rand;
-  $("#v-imposters").textContent = rnd ? "≤" + S.imposters : S.imposters;
-  $("#v-imposters").classList.toggle("rand", rnd);
+  paintCount("#v-imposters", S.imposters, S.randImp);
   /* "up to" only reads as a secret when there is something to be secret about */
-  $("#v-blackmail").textContent = rnd && S.blackmail ? "≤" + S.blackmail : S.blackmail;
-  $("#v-blackmail").classList.toggle("rand", rnd && !!S.blackmail);
+  paintCount("#v-blackmail", S.blackmail, S.randBm && !!S.blackmail);
   $("#v-minutes").textContent = S.minutes;
   $("#app-version").textContent = "v" + APP_VERSION;
   $("#eyebrow-line").textContent = t("tableline").replace("{n}", S.players);
@@ -806,11 +823,15 @@ function paintSetup(){
     b.textContent = t("hs_" + b.dataset.hs);
     b.classList.toggle("on", b.dataset.hs === S.hintStyle);
   });
-  $("#sw-rand").classList.toggle("on", rnd);
   $$("#seg-lang button").forEach(b=>b.classList.toggle("on", b.dataset.lang===S.lang));
   paintNames();
   paintChips();
   paintText();
+  /* after paintText, which rewrites every [data-t] from the table. a count
+     that has become a ceiling explains itself where its own label lives,
+     which is also how the tap teaches itself the first time. */
+  if(S.randImp) $("#h-imposters").textContent = t("upto_h");
+  if(S.randBm && S.blackmail) $("#h-blackmail").textContent = t("upto_h");
   save();
 }
 
@@ -968,14 +989,14 @@ function deal(){
     S.clue = pick[at] || pick[1] || "";
   }
 
-  const count = S.rand ? rollImposterCount(S.imposters) : S.imposters;
+  const count = S.randImp ? rollImposterCount(S.imposters) : S.imposters;
   const seats = [];
   for(let i=1;i<=S.players;i++) seats.push(i);
   for(let i=seats.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [seats[i],seats[j]]=[seats[j],seats[i]]; }
   S.impSet = new Set(seats.slice(0, count));
   /* taken from what the imposters left behind, so the two can never overlap -
      a blackmailed player is an honest player, that is the whole point of them */
-  const bmCount = S.rand ? rollImposterCount(S.blackmail) : S.blackmail;
+  const bmCount = S.randBm ? rollImposterCount(S.blackmail) : S.blackmail;
   S.bmSet = new Set(seats.slice(count, count + bmCount));
   S.bmWords = {};
   S.bmSet.forEach(n => { S.bmWords[n] = drawBlackmailWord(); });
@@ -1200,7 +1221,9 @@ function paintVoteMeta(){
    Either way the honest answer is "no one was different", so the ballot needs
    a way to say it. Seat 0 is that option; it only appears where it can be
    right, so a fixed-count round never offers a trap. */
-function nobodyOption(){ return S.rand; }
+/* only the imposter count decides this - a secret number of blackmailed
+   players changes nothing about whether anybody was odd */
+function nobodyOption(){ return S.randImp; }
 
 function openVote(){
   S.votes = new Array(S.players+1).fill(0);
@@ -1345,8 +1368,10 @@ $("#btn-setup").onclick = ()=>{ paintSetup(); show("s-setup"); };
 $("#btn-deal").onclick = deal;
 
 /* ============ setup controls ============ */
+/* [data-d] only - the value between the two keys is a button as well now,
+   and it must not be read as a step of NaN */
 $$(".stepper").forEach(st=>{
-  st.querySelectorAll("button").forEach(b=>{
+  st.querySelectorAll("button[data-d]").forEach(b=>{
     b.onclick = ()=>{
       const key = st.dataset.step, d = parseInt(b.dataset.d,10);
       S[key] += d;
@@ -1354,10 +1379,15 @@ $$(".stepper").forEach(st=>{
     };
   });
 });
+/* tap the number itself to swap an exact count for a ceiling. each one
+   carries its own flag, so the imposters can be fixed while the number of
+   blackmailed stays secret, or the other way round. */
+$$(".stepper .val").forEach(b=>{
+  b.onclick = ()=>{ S[b.dataset.rnd] = !S[b.dataset.rnd]; buzz(14); paintSetup(); };
+});
 /* every setting answers with a short buzz, so a tap is felt as well as seen */
 $("#sw-hint").onclick  = ()=>{ S.hintCat = !S.hintCat; buzz(14); paintSetup(); };
 $("#sw-hintw").onclick = ()=>{ S.hintMode = S.hintMode==="imposter" ? "off" : "imposter"; buzz(14); paintSetup(); };
-$("#sw-rand").onclick  = ()=>{ S.rand = !S.rand; buzz(14); paintSetup(); };
 $("#sw-vote").onclick  = ()=>{ S.vote = !S.vote; buzz(14); paintSetup(); };
 $$("#seg-lang button").forEach(b=>{
   b.onclick = ()=>{ S.lang = b.dataset.lang; buzz(10); paintSetup(); };

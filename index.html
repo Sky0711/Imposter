@@ -126,7 +126,10 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 }
 .field > :first-child{flex:1 1 165px;min-width:0}
 .field > :last-child{margin-left:auto}
-.field .label{font-size:16px;font-weight:600;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+/* nowrap, so the die and the eye stay on the line with the name they
+   belong to rather than dropping under it on a narrow phone. the name
+   itself may shrink and wrap - the controls keep their size */
+.field .label{font-size:16px;font-weight:600;display:flex;align-items:center;gap:10px;flex-wrap:nowrap;min-width:0}
 /* The three sides wear their colours from the settings screen on, so the
    card is not the first place you have to learn them: blue is the players
    and what they know, red is the imposter, black is the blackmail. Black
@@ -175,19 +178,6 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .diebtn:active{background:var(--velvet)}
 .diebtn.on{color:var(--accent);border-color:var(--accent)}
 .diebtn.on .die{opacity:1}
-/* whether the imposter is let in on the blackmail. it belongs on this row
-   and not on the imposters' one: over there an eye could mean the clue or
-   it could mean this, and an icon with two possible meanings has none. */
-.eyebtn{
-  width:40px;height:40px;border-radius:12px;flex:none;
-  display:flex;align-items:center;justify-content:center;
-  background:transparent;border:1px solid rgba(244,236,224,.18);color:var(--bone);
-}
-.eyebtn .eye{width:22px;height:22px;fill:currentColor;opacity:.45;transition:opacity .16s ease}
-.eyebtn:active{background:var(--velvet)}
-.eyebtn.on{color:var(--imp);border-color:rgba(255,107,126,.55)}
-.eyebtn.on .eye{opacity:1}
-.eyebtn.on .slash{display:none}
 .switch{
   width:56px;height:32px;border-radius:20px;background:var(--velvet);
   border:1px solid rgba(244,236,224,.12);position:relative;flex:none;transition:background .18s ease;
@@ -474,7 +464,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
     <div class="field" id="f-blackmail">
       <div>
-        <div class="label"><span class="tint-bm" data-t="bm">Blackmailed</span><button class="eyebtn on" id="e-blackmail" aria-label="imposter sees blackmail"><svg class="eye" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 6.2 12 6.2 21.5 12 21.5 12 18 17.8 12 17.8 2.5 12 2.5 12z" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="2.6"/><line class="slash" x1="4.4" y1="19.6" x2="19.6" y2="4.4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg></button><button class="diebtn" id="d-blackmail" data-rnd="randBm"><svg class="die" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.6" y="2.6" width="18.8" height="18.8" rx="5.2" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="8.4" cy="8.4" r="2.2"/><circle cx="12" cy="12" r="2.2"/><circle cx="15.6" cy="15.6" r="2.2"/></svg></button></div>
+        <div class="label"><span class="tint-bm" data-t="bm">Blackmailed</span><button class="diebtn" id="d-blackmail" data-rnd="randBm"><svg class="die" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.6" y="2.6" width="18.8" height="18.8" rx="5.2" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="8.4" cy="8.4" r="2.2"/><circle cx="12" cy="12" r="2.2"/><circle cx="15.6" cy="15.6" r="2.2"/></svg></button></div>
         <div class="hint" id="h-blackmail" data-t="bm_h">Honest, but must smuggle a word in</div>
       </div>
       <div class="stepper" data-step="blackmail">
@@ -502,6 +492,11 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
     <div class="field" id="f-hintw">
       <div><div class="label" data-t="hintw">Imposter sees clue</div><div class="hint" data-t="hintw_h">One clue per word, only for them</div></div>
       <div class="switch on" id="sw-hintw"><i></i></div>
+    </div>
+
+    <div class="field" id="f-bmimp">
+      <div><div class="label" data-t="bmimp">Imposter sees blackmail</div><div class="hint" data-t="bmimp_h">Knows the word to listen for</div></div>
+      <div class="switch on" id="sw-bmimp"><i></i></div>
     </div>
 
     <div class="field" id="f-hstyle">
@@ -642,7 +637,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "6.6";
+const APP_VERSION = "6.7";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list
@@ -745,7 +740,7 @@ vote:"Voting",vote_h:"Accuse before the reveal",vote_q:"Who is the imposter?",
 vote_note:"Everyone votes once",thevote:"the vote",
 caught:"Caught!",partial:"Half right",missed:"Got away!",
 bm:"Blackmailed",bm_h:"Honest, but must smuggle a word in",
-bmimp_off:"Imposter is not told",
+bmimp:"Imposter sees blackmail",bmimp_h:"Knows the word to listen for",
 bm_you:"You are blackmailed to say the word:",bm_imp:"Somebody is blackmailed to say:",
 thebm:"blackmailed",
 tableline:"pass-and-play · {n} players"},
@@ -770,7 +765,7 @@ caught:"Ulovljeni!",partial:"Napola točno",missed:"Izvukli su se!",
 /* the badge is the noun, not the adjective - "ucijenjen/ucijenjena" would
    put a gender on whoever happens to be holding the phone */
 bm:"Ucijenjeni",bm_h:"Pošten je, ali mora ubaciti riječ",
-bmimp_off:"Uljez ne zna za ucjenu",
+bmimp:"Uljez vidi ucjenu",bmimp_h:"Zna koju riječ čekati",
 bm_you:"Ucijenjen si da kažeš riječ:",bm_imp:"Netko je ucijenjen da kaže:",
 thebm:"ucijenjeni",
 tableline:"igra u krug · {n} igrača"}
@@ -903,10 +898,7 @@ function paintSetup(){
   $("#sw-hint").classList.toggle("on", S.hintCat);
   $("#sw-hintw").classList.toggle("on", S.hintMode === "imposter");
   $("#sw-vote").classList.toggle("on", S.vote);
-  $("#e-blackmail").classList.toggle("on", S.bmImp);
-  $("#e-blackmail").setAttribute("aria-pressed", S.bmImp ? "true" : "false");
-  /* in undercover the imposter is never told, so there is nothing to ask */
-  $("#e-blackmail").style.display = S.mode !== "undercover" && S.blackmail > 0 ? "" : "none";
+  $("#sw-bmimp").classList.toggle("on", S.bmImp);
   $$("#seg-mode button").forEach(b=>{
     b.textContent = t("m_" + b.dataset.mode);
     b.classList.toggle("on", b.dataset.mode === S.mode);
@@ -916,6 +908,9 @@ function paintSetup(){
   $("#f-hintw").style.display = clues ? "" : "none";
   /* and the style only matters while a clue is actually being handed over */
   $("#f-hstyle").style.display = clues && S.hintMode === "imposter" ? "" : "none";
+  /* nothing to ask while no blackmail is being dealt, and nothing to ask in
+     undercover either - there the imposter is never told regardless */
+  $("#f-bmimp").style.display = clues && S.blackmail > 0 ? "" : "none";
   $$("#seg-hstyle button").forEach(b=>{
     b.textContent = t("hs_" + b.dataset.hs);
     b.classList.toggle("on", b.dataset.hs === S.hintStyle);
@@ -927,13 +922,9 @@ function paintSetup(){
   /* after paintText, which rewrites every [data-t] from the table. a count
      that has become a ceiling explains itself where its own label lives,
      which is also how the tap teaches itself the first time. */
+  /* a lit die is the only thing either line has to explain */
   if(S.randImp) $("#h-imposters").textContent = t("upto_h");
-  /* the row carries two switches now, so its line reports whichever of them
-     is set away from its default - both, if both are */
-  const bmNotes = [];
-  if(S.randBm) bmNotes.push(t("upto_h"));
-  if(!S.bmImp && S.mode !== "undercover" && S.blackmail > 0) bmNotes.push(t("bmimp_off"));
-  if(bmNotes.length) $("#h-blackmail").textContent = bmNotes.join(" · ");
+  if(S.randBm)  $("#h-blackmail").textContent = t("upto_h");
   save();
 }
 
@@ -1526,7 +1517,7 @@ $$(".diebtn").forEach(b=>{
 $("#sw-hint").onclick  = ()=>{ S.hintCat = !S.hintCat; buzz(14); paintSetup(); };
 $("#sw-hintw").onclick = ()=>{ S.hintMode = S.hintMode==="imposter" ? "off" : "imposter"; buzz(14); paintSetup(); };
 $("#sw-vote").onclick  = ()=>{ S.vote = !S.vote; buzz(14); paintSetup(); };
-$("#e-blackmail").onclick = ()=>{ S.bmImp = !S.bmImp; buzz(14); paintSetup(); };
+$("#sw-bmimp").onclick = ()=>{ S.bmImp = !S.bmImp; buzz(14); paintSetup(); };
 $$("#seg-lang button").forEach(b=>{
   b.onclick = ()=>{ S.lang = b.dataset.lang; buzz(10); paintSetup(); };
 });

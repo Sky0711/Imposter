@@ -250,13 +250,20 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   font-family:var(--body);font-weight:600;font-size:clamp(17px,4.6vw,21px);
   line-height:1.4;color:rgba(122,176,255,.92);
 }
-/* the word to smuggle is black, as its name promises - which on a card this
-   dark means a black field with bone on it, not black ink nobody could read */
+/* Blackmail is black, as its name promises - which on a card this dark
+   means a black field with bone on it, not black ink nobody could read.
+   The sentence sits inside the field with the word, so the whole block is
+   the black thing: both the seat carrying it and the imposter listening
+   for it can see at a glance that this is a blackmail, before reading a
+   word of it. */
+.info.bm{
+  background:var(--noir);border:1px solid rgba(244,236,224,.22);
+  border-radius:14px;padding:11px 15px 13px;gap:5px;
+}
+.info.bm .lbl{color:rgba(244,236,224,.7)}
 .info.bm .v{
   font-family:var(--display);font-weight:800;font-size:clamp(20px,5.4vw,26px);
-  line-height:1.15;letter-spacing:.01em;text-transform:uppercase;
-  background:var(--noir);color:var(--bone);border:1px solid rgba(244,236,224,.24);
-  padding:8px 16px;border-radius:12px;
+  line-height:1.15;letter-spacing:.01em;text-transform:uppercase;color:var(--bone);
 }
 .rev-hint{font-size:16px;color:var(--dim-2);text-align:center;max-width:28ch;margin-top:-8px}
 /* Every card looks the same from a step away. A red imposter card was
@@ -512,7 +519,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
           <div class="word" id="front-word">—</div>
           <div class="cat-tag" id="front-cat"></div>
           <div class="info clue" id="front-hint" style="display:none">
-            <span class="lbl" id="clue-label"></span><b class="v" id="clue-word"></b>
+            <b class="v" id="clue-word"></b>
           </div>
           <div class="info bm" id="front-task" style="display:none">
             <span class="lbl" id="task-label"></span><b class="v" id="task-word"></b>
@@ -601,7 +608,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "6.2";
+const APP_VERSION = "6.3";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list
@@ -703,7 +710,7 @@ vote_q_u:"Who had a different word?",govote:"Vote",skipvote:"Skip vote",
 vote:"Voting",vote_h:"Accuse before the reveal",vote_q:"Who is the imposter?",
 vote_note:"Everyone votes once",thevote:"the vote",
 caught:"Caught!",partial:"Half right",missed:"Got away!",
-bm:"Blackmailed",bm_h:"Honest, but must smuggle a word in",cluelbl:"Your clue:",
+bm:"Blackmailed",bm_h:"Honest, but must smuggle a word in",
 bm_you:"You are blackmailed to say the word:",bm_imp:"Somebody is blackmailed to say:",
 thebm:"blackmailed",
 tableline:"pass-and-play · {n} players"},
@@ -727,7 +734,7 @@ vote_note:"Svatko glasa jednom",thevote:"glasovi",
 caught:"Ulovljeni!",partial:"Napola točno",missed:"Izvukli su se!",
 /* the badge is the noun, not the adjective - "ucijenjen/ucijenjena" would
    put a gender on whoever happens to be holding the phone */
-bm:"Ucijenjeni",bm_h:"Pošten je, ali mora ubaciti riječ",cluelbl:"Tvoja natuknica:",
+bm:"Ucijenjeni",bm_h:"Pošten je, ali mora ubaciti riječ",
 bm_you:"Ucijenjen si da kažeš riječ:",bm_imp:"Netko je ucijenjen da kaže:",
 thebm:"ucijenjeni",
 tableline:"igra u krug · {n} igrača"}
@@ -1094,7 +1101,6 @@ function paintSeat(){
   $("#front-cat").textContent = S.hintCat ? catLabel(S.catKey) : "";
   const seesClue = !und && S.hintMode==="imposter" && isImp && !!S.clue;
   $("#front-hint").style.display = seesClue ? "" : "none";
-  $("#clue-label").textContent = seesClue ? t("cluelbl") : "";
   $("#clue-word").textContent = seesClue ? S.clue : "";
   /* your own assignment if you are the one carrying it, or - if you are the
      imposter - the word you should be listening for. the imposter is told

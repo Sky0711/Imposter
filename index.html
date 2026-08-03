@@ -32,6 +32,10 @@
   /* blackmail answers to no mode and borrows no role's hue: black, with bone
      on it at 17:1. the one card in the deck with no colour in it at all. */
   --noir:#08050F;
+  /* conspiracy's own colour - orchid, 7.4:1 on the card. it had to sit clear
+     of brass, jade, the imposter's red and the players' blue, all of which
+     already mean something, and clear of the purple it stands on */
+  --orchid:#D98CFF;
   --card:#241340;      /* every card - bone on this is 14.4:1 */
   --card-top:#2E1852;  /* the lit corner of the card face */
   /* the mode's own colour. classic is brass, undercover goes green - set on
@@ -47,6 +51,7 @@
 /* undercover is not just a green accent on a purple app - the whole surface
    goes cold, so the two modes are told apart from across the table */
 :root[data-mode="undercover"]{--accent:var(--jade)}
+:root[data-mode="conspiracy"]{--accent:var(--orchid)}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{height:100%}
 body{
@@ -191,6 +196,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .switch.on{background:var(--accent)}
 .switch.on i{transform:translateX(24px);background:#2A1A05}
 :root[data-mode="undercover"] .switch.on i{background:#0B2E22}
+:root[data-mode="conspiracy"] .switch.on i{background:#2A0B45}
 .switch:active{filter:brightness(1.25)}
 .chip:active,.seg button:active{transform:scale(.96)}
 
@@ -209,6 +215,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
    buttons and the marks it points at - is one colour across the screen */
 #f-hstyle .label{color:var(--player)}
 #seg-mode button[data-mode="undercover"].on{background:var(--jade);color:#06251A}
+#seg-mode button[data-mode="conspiracy"].on{background:var(--orchid);color:#2A0B45}
 #seg-hstyle button{color:var(--player)}
 #seg-hstyle button.on{background:var(--player);color:#0A1A33}
 .seg{display:flex;gap:4px;background:var(--velvet);border-radius:13px;padding:4px;flex:none}
@@ -255,6 +262,16 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
     radial-gradient(120% 70% at 50% -10%, rgba(40,62,84,.9), transparent 60%),
     radial-gradient(80% 50% at 50% 110%, rgba(53,192,142,.13), transparent 70%);
 }
+:root[data-mode="conspiracy"] .card{border-color:rgba(217,140,255,.30)}
+:root[data-mode="conspiracy"] .pull{
+  background:rgba(217,140,255,.15);
+  border-top-color:rgba(217,140,255,.38);
+}
+:root[data-mode="conspiracy"] body::before{
+  background:
+    radial-gradient(120% 70% at 50% -10%, rgba(74,36,110,.92), transparent 60%),
+    radial-gradient(80% 50% at 50% 110%, rgba(217,140,255,.12), transparent 70%);
+}
 .card .front{z-index:1}
 /* Everything the card tells you past the word itself takes one shape: a
    quiet line saying what this is, then the thing itself in the colour that
@@ -296,6 +313,30 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .card .front{padding-top:calc(26px + var(--strip, 78px))}
 .seat-num{font-family:var(--display);font-weight:800;font-size:88px;line-height:.9;color:var(--accent);letter-spacing:-.03em}
 .seat-name{font-family:var(--display);font-weight:700;font-size:27px;line-height:1.15;letter-spacing:-.01em;word-break:break-word;max-width:100%}
+
+/* ---- writing pass (conspiracy) ---- */
+.wcover,.wform{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:16px;text-align:center;width:100%;
+}
+.wform{gap:18px}
+.wask{font-size:17px;line-height:1.45;color:var(--dim-2);max-width:26ch}
+/* the imposter is asked for a blackmail, so the ask wears the blackmail's
+   black - the same panel their card will show it back in later */
+.wform.imp .wask{
+  background:var(--noir);border:1px solid rgba(244,236,224,.22);
+  border-radius:14px;padding:11px 15px;color:rgba(244,236,224,.82);
+}
+#write-input{
+  width:100%;max-width:340px;font:inherit;font-size:22px;font-weight:700;
+  font-family:var(--display);text-align:center;min-height:60px;
+  background:var(--velvet);color:var(--bone);
+  border:1.5px solid rgba(244,236,224,.18);border-radius:14px;
+  padding:14px 16px;outline:none;
+  -webkit-user-select:text;user-select:text;
+}
+#write-input::placeholder{color:rgba(244,236,224,.4);font-weight:400;font-family:var(--body);font-size:17px}
+#write-input:focus{border-color:var(--accent)}
 
 /* ---- name entry ---- */
 .names{display:flex;flex-direction:column;gap:8px;margin-top:12px}
@@ -339,14 +380,14 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   font-family:var(--body);font-size:14px;font-weight:600;letter-spacing:.04em;
   color:var(--dim-2);
 }
-.front .badge{
+.front .badge,.wform .badge{
   font-family:var(--body);font-weight:800;font-size:16px;letter-spacing:.1em;text-transform:uppercase;
   padding:10px 18px;border-radius:99px;
   background:rgba(122,176,255,.15);border:1.5px solid var(--player);color:var(--player);
 }
 /* the role is red again - but as a line of text, not a field of colour.
    a few letters cannot be read from across the table; a red card could. */
-.front .badge.imp{background:rgba(255,107,126,.13);border-color:var(--imp);color:var(--imp)}
+.front .badge.imp,.wform .badge.imp{background:rgba(255,107,126,.13);border-color:var(--imp);color:var(--imp)}
 
 /* ---- play ---- */
 .clock{font-family:var(--display);font-weight:800;font-size:clamp(64px,21vw,104px);line-height:.95;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
@@ -374,6 +415,9 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   background:transparent;border:1.5px solid var(--accent);color:var(--accent);
   font-size:18px;padding:9.5px 16px;
 }
+/* the one of the written words that actually got played. .bm follows .hit in
+   this sheet and would otherwise wash the green straight back out again */
+.imp-pill.bm.hit{background:var(--accent);border-color:var(--accent);color:#2A0B45}
 .verdict{font-family:var(--display);font-weight:800;font-size:22px;text-align:center}
 .verdict.caught{color:var(--jade)}
 .verdict.partial{color:var(--brass)}
@@ -441,7 +485,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
     <div class="field">
       <div><div class="label" data-t="mode">Game mode</div><div class="hint" data-t="mode_h">Two ways to play</div></div>
       <div class="seg" id="seg-mode">
-        <button data-mode="classic">Classic</button><button data-mode="undercover">Undercover</button>
+        <button data-mode="classic">Classic</button><button data-mode="undercover">Undercover</button><button data-mode="conspiracy">Conspiracy</button>
       </div>
     </div>
 
@@ -484,7 +528,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
       <div class="switch on" id="sw-vote"><i></i></div>
     </div>
 
-    <div class="field">
+    <div class="field" id="f-hintcat">
       <div><div class="label" data-t="hint">Imposter sees category</div><div class="hint" data-t="hint_h">Gives them a fighting chance</div></div>
       <div class="switch on" id="sw-hint"><i></i></div>
     </div>
@@ -517,12 +561,42 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
     <div class="eyebrow" data-t="names">Names</div>
     <div class="names" id="names"></div>
 
-    <div style="height:18px"></div>
-    <div class="eyebrow" data-t="category">Category</div>
-    <div class="chips" id="chips"></div>
+    <div id="f-cats">
+      <div style="height:18px"></div>
+      <div class="eyebrow" data-t="category">Category</div>
+      <div class="chips" id="chips"></div>
+    </div>
 
     <div class="spacer"></div>
     <button class="btn" id="btn-deal" data-t="deal">Deal the cards</button>
+  </section>
+
+  <!-- DEAL -->
+  <!-- WRITE (conspiracy only) -->
+  <section class="screen" id="s-write">
+    <div class="topbar">
+      <button class="backbtn" id="btn-wback" aria-label="Back">‹</button>
+      <div class="eyebrow"><span id="write-progress">1 / 4</span></div>
+    </div>
+    <div class="stage">
+      <!-- shut until the seat says it has the phone: the prompt itself says
+           whether you are the imposter, so it cannot be on screen in transit -->
+      <div class="wcover" id="write-cover">
+        <div class="eyebrow" data-t="handto">Hand the phone to</div>
+        <div class="seat-num" id="write-num">1</div>
+        <div class="seat-name" id="write-name"></div>
+        <button class="btn ghost" id="btn-wready" data-t="wready">I have it</button>
+      </div>
+      <div class="wform" id="write-form" style="display:none">
+        <div class="badge" id="write-badge">Word</div>
+        <div class="wask" id="write-ask"></div>
+        <input id="write-input" type="text" maxlength="20" autocomplete="off"
+               autocorrect="off" autocapitalize="off" spellcheck="false"
+               enterkeyhint="done">
+      </div>
+    </div>
+    <div class="eyebrow center" id="write-note" data-t="note_write">Nobody else looks.</div>
+    <button class="btn" id="btn-wnext" disabled data-t="next">Next player</button>
   </section>
 
   <!-- DEAL -->
@@ -613,6 +687,10 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
         <div class="eyebrow" id="rev-imp-label" data-t="theimposter">the imposter</div>
         <div class="imp-list" id="rev-imps"></div>
       </div>
+      <div class="kv" id="rev-written-box" style="display:none">
+        <div class="eyebrow" data-t="thewritten">the words you wrote</div>
+        <div class="imp-list" id="rev-written"></div>
+      </div>
       <div class="kv" id="rev-bm-box" style="display:none">
         <div class="eyebrow" data-t="thebm">blackmailed</div>
         <div class="imp-list" id="rev-bm"></div>
@@ -637,7 +715,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "6.8";
+const APP_VERSION = "7.0";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list
@@ -731,7 +809,7 @@ upto:"Random count",upto_h:"Up to that many. Could be none.",
 tagline:"Everyone gets the same secret word. Someone doesn't. Find out who.",
 start:"Start the round",noone:"Nobody",time:"Time",names:"Names",nameph:"Name (optional)",
 hintw:"Imposter sees clue",hintw_h:"One clue, only for them",everyone:"Everyone",
-mode:"Game mode",mode_h:"Two ways to play",m_classic:"Classic",m_undercover:"Undercover",
+mode:"Game mode",mode_h:"Three ways to play",m_classic:"Classic",m_undercover:"Undercover",m_conspiracy:"Conspiracy",
 hstyle:"Clue style",hstyle_h:"Only in categories marked +",
 hs_simple:"Simple",hs_niche:"Niche",hs_long:"Long",hs_random:"Mix",
 mostyou:"most of you had",allhad:"everyone had",oddword:"the odd word",oddone:"the odd one out",
@@ -741,6 +819,10 @@ vote_note:"Everyone votes once",thevote:"the vote",
 caught:"Caught!",partial:"Half right",missed:"Got away!",
 bm:"Blackmailed",bm_h:"Honest, but must smuggle a word in",
 bmimp:"Imposter sees blackmail",bmimp_h:"Knows the word to listen for",
+wready:"I have the phone",note_write:"Nobody else looks.",
+ask_word:"Write a secret word. One of the words written tonight becomes the round's.",
+ask_plant:"Write a word to plant. Somebody will be made to say it \u2014 and it will not be you.",
+wordph:"a word",bm_mine:"The blackmail you planted:",thewritten:"the words you wrote",
 bm_you:"You are blackmailed to say the word:",bm_imp:"Somebody is blackmailed to say:",
 thebm:"blackmailed",
 tableline:"pass-and-play · {n} players"},
@@ -754,7 +836,7 @@ upto:"Nasumičan broj",upto_h:"Najviše toliko. Može i nijedan.",
 tagline:"Svi dobiju istu tajnu riječ. Netko ne. Otkrijte tko.",
 start:"Kreni s rundom",noone:"Nitko",time:"Vrijeme",names:"Imena",nameph:"Ime (nije obavezno)",
 hintw:"Uljez vidi natuknicu",hintw_h:"Jedna natuknica po riječi",everyone:"Svi",
-mode:"Način igre",mode_h:"Dva načina igre",m_classic:"Klasik",m_undercover:"Druga riječ",
+mode:"Način igre",mode_h:"Tri načina igre",m_classic:"Klasik",m_undercover:"Druga riječ",m_conspiracy:"Zavjera",
 hstyle:"Vrsta natuknice",hstyle_h:"Samo u kategorijama s +",
 hs_simple:"Laka",hs_niche:"Znalačka",hs_long:"Duga",hs_random:"Mix",
 mostyou:"većina je imala",allhad:"svi su imali",oddword:"druga riječ",oddone:"tko je imao drugu",
@@ -766,6 +848,10 @@ caught:"Ulovljeni!",partial:"Napola točno",missed:"Izvukli su se!",
    put a gender on whoever happens to be holding the phone */
 bm:"Ucijenjeni",bm_h:"Pošten je, ali mora ubaciti riječ",
 bmimp:"Uljez vidi ucjenu",bmimp_h:"Zna koju riječ čekati",
+wready:"Kod mene je",note_write:"Nitko drugi ne gleda.",
+ask_word:"Napiši tajnu riječ. Jedna od večerašnjih riječi bit će rundina.",
+ask_plant:"Napiši riječ koju podmećeš. Netko će je morati reći \u2014 i to nećeš biti ti.",
+wordph:"riječ",bm_mine:"Ucjena koju si podmetnuo:",thewritten:"napisane riječi",
 bm_you:"Ucijenjen si da kažeš riječ:",bm_imp:"Netko je ucijenjen da kaže:",
 thebm:"ucijenjeni",
 tableline:"igra u krug · {n} igrača"}
@@ -775,6 +861,8 @@ tableline:"igra u krug · {n} igrača"}
 /* cats: which categories are in play. empty means all of them. */
 const S = {players:4, imposters:1, blackmail:0, randImp:false, randBm:false, touched:"", bmImp:true, minutes:4, hintCat:true, hintMode:"imposter", hintStyle:"simple", vote:true, mode:"classic", lang:"hr", cats:[], names:[],
            word:"", twin:"", clue:"", catKey:"", impSet:new Set(), bmSet:new Set(), bmWords:{},
+           /* conspiracy: what each seat wrote, and what each imposter planted */
+           pool:{}, plants:{}, wseat:1,
            votes:null, seat:1, first:1, left:0, timer:null, running:false};
 
 const $ = s => document.querySelector(s);
@@ -819,7 +907,7 @@ function load(){
     if(typeof d.hintCat === "boolean") S.hintCat = d.hintCat;
     if(typeof d.vote === "boolean") S.vote = d.vote;
     if(typeof d.bmImp === "boolean") S.bmImp = d.bmImp;
-    if(d.mode === "classic" || d.mode === "undercover") S.mode = d.mode;
+    if(["classic","undercover","conspiracy"].indexOf(d.mode) >= 0) S.mode = d.mode;
     if(["simple","niche","long","random"].indexOf(d.hintStyle) >= 0) S.hintStyle = d.hintStyle;
     /* "all" was dropped as an option - fold old saves onto imposter-only */
     if(d.hintMode === "off") S.hintMode = "off";
@@ -848,6 +936,14 @@ function clamp(){
      is still being said and there is no imposter to pin it on. */
   S.imposters = Math.max(0, Math.min(S.players, S.imposters));
   S.blackmail = Math.max(0, Math.min(S.players, S.blackmail));
+  /* Conspiracy derives the blackmail from the imposters - one planted word
+     each - so every imposter needs both somebody left to write a candidate
+     word and a distinct innocent to be handed their plant. Half the table
+     is exactly where those two run out. */
+  if(S.mode === "conspiracy"){
+    S.imposters = Math.min(S.imposters, Math.floor(S.players/2));
+    return;
+  }
   /* In undercover the two roles may share a seat (see deal), so neither
      crowds the other and there is nothing further to settle. */
   if(S.mode === "undercover") return;
@@ -903,8 +999,16 @@ function paintSetup(){
     b.textContent = t("m_" + b.dataset.mode);
     b.classList.toggle("on", b.dataset.mode === S.mode);
   });
+  /* Conspiracy owns no word list, so everything the list pays for goes with
+     it: no categories to show or choose, no clues to hand over, and no
+     blackmail count to set - there it is one planted word per imposter, and
+     the imposter needs no telling about a word they wrote themselves. */
+  const con = S.mode === "conspiracy";
+  $("#f-blackmail").style.display = con ? "none" : "";
+  $("#f-hintcat").style.display   = con ? "none" : "";
+  $("#f-cats").style.display      = con ? "none" : "";
   /* no clues at all in undercover - the other word is the clue */
-  const clues = S.mode !== "undercover";
+  const clues = S.mode !== "undercover" && !con;
   $("#f-hintw").style.display = clues ? "" : "none";
   /* and the style only matters while a clue is actually being handed over */
   $("#f-hstyle").style.display = clues && S.hintMode === "imposter" ? "" : "none";
@@ -1054,8 +1158,31 @@ function drawBlackmailWord(){
   return "";
 }
 
+/* the shuffled seats a round is dealt from, imposters first */
+function drawRoles(){
+  const count = S.randImp ? rollImposterCount(S.imposters) : S.imposters;
+  const seats = [];
+  for(let i=1;i<=S.players;i++) seats.push(i);
+  for(let i=seats.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [seats[i],seats[j]]=[seats[j],seats[i]]; }
+  S.impSet = new Set(seats.slice(0, count));
+  return {seats, count};
+}
+
 function deal(){
   clamp();
+  /* Conspiracy owns no words: the table writes them. Roles are drawn now,
+     before a single word exists, because the imposter has to be told at the
+     writing pass - that is the pass where they plant their blackmail. */
+  if(S.mode === "conspiracy"){
+    S.catKey = ""; S.word = ""; S.twin = ""; S.clue = "";
+    S.bmSet = new Set(); S.bmWords = {}; S.pool = {}; S.plants = {};
+    drawRoles();
+    S.votes = null;
+    S.wseat = 1;
+    paintWrite();
+    show("s-write");
+    return;
+  }
   /* only categories that exist in this language can be dealt; if every
      picked one lives in the other language, fall back to all of ours */
   const avail = catsFor().map(c=>c.key);
@@ -1086,11 +1213,7 @@ function deal(){
     S.clue = pick[at] || pick[1] || "";
   }
 
-  const count = S.randImp ? rollImposterCount(S.imposters) : S.imposters;
-  const seats = [];
-  for(let i=1;i<=S.players;i++) seats.push(i);
-  for(let i=seats.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [seats[i],seats[j]]=[seats[j],seats[i]]; }
-  S.impSet = new Set(seats.slice(0, count));
+  const {seats, count} = drawRoles();
   const bmCount = S.randBm ? rollImposterCount(S.blackmail) : S.blackmail;
   if(S.mode === "undercover"){
     /* Drawn from the whole table, imposters included. If the blackmailed
@@ -1118,6 +1241,70 @@ function deal(){
   show("s-deal");
 }
 
+/* ============ the writing pass (conspiracy) ============ */
+/* Shut, then open: the prompt says whether you are the imposter, so it must
+   not be on screen while the phone is crossing the table. One deliberate tap
+   opens it, the same bargain the card makes with its cover. */
+function paintWrite(){
+  const n = S.wseat, isImp = S.impSet.has(n);
+  $("#write-num").textContent = n;
+  $("#write-name").textContent = nameOf(n);
+  $("#write-progress").textContent = n + " / " + S.players;
+  $("#write-cover").style.display = "";
+  $("#write-form").style.display = "none";
+  $("#write-form").classList.toggle("imp", isImp);
+  $("#write-badge").textContent = isImp ? t("imposter") : t("word");
+  $("#write-badge").classList.toggle("imp", isImp);
+  $("#write-ask").textContent = isImp ? t("ask_plant") : t("ask_word");
+  const inp = $("#write-input");
+  inp.value = "";                 /* never the last seat's word */
+  inp.placeholder = t("wordph");
+  $("#btn-wnext").textContent = n >= S.players ? t("start") : t("next");
+  $("#btn-wnext").disabled = true;
+}
+
+function openWrite(){
+  $("#write-cover").style.display = "none";
+  $("#write-form").style.display = "";
+  $("#write-input").focus();
+}
+
+/* one word per seat: the innocents' become candidates for the round's secret,
+   the imposters' become the blackmail somebody else will have to say */
+function takeWrite(){
+  const w = $("#write-input").value.trim().slice(0,20);
+  if(!w) return false;
+  if(S.impSet.has(S.wseat)) S.plants[S.wseat] = w;
+  else S.pool[S.wseat] = w;
+  return true;
+}
+
+/* Between the passes. The secret is one of the words the innocents wrote;
+   each imposter's plant goes to a different innocent. Everything downstream -
+   the card, the ballot, the reveal - reads the same impSet/bmSet/bmWords it
+   always has, so none of it needs to know this mode exists. */
+function composeConspiracy(){
+  const cand = Object.keys(S.pool).map(k=>S.pool[k]).filter(Boolean);
+  const planted = Object.keys(S.plants).map(k=>S.plants[k]).filter(Boolean);
+  const same = (a,b) => a.toLocaleLowerCase() === b.toLocaleLowerCase();
+  /* a secret that is also somebody's plant would set the blackmailed player
+     to say the word the whole table is already saying */
+  const clean = cand.filter(w => !planted.some(p => same(p,w)));
+  const from = clean.length ? clean : cand;
+  S.word = from.length ? from[Math.floor(Math.random()*from.length)] : "";
+  const innocents = [];
+  for(let i=1;i<=S.players;i++) if(!S.impSet.has(i)) innocents.push(i);
+  for(let i=innocents.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [innocents[i],innocents[j]]=[innocents[j],innocents[i]]; }
+  S.bmSet = new Set(); S.bmWords = {};
+  Array.from(S.impSet).forEach((imp, i) => {
+    const w = S.plants[imp], to = innocents[i];
+    if(!w || !to) return;           /* clamp should prevent this; be safe */
+    S.bmSet.add(to); S.bmWords[to] = w;
+  });
+  S.first = 1+Math.floor(Math.random()*S.players);
+  S.seat = 1;
+}
+
 function paintSeat(){
   $("#seat-num").textContent = S.seat;
   $("#seat-name").textContent = nameOf(S.seat);
@@ -1142,7 +1329,7 @@ function paintSeat(){
   fitWord(wordEl, shown);
   /* all or nobody - showing it to the table leaked it to the imposter anyway */
   $("#front-cat").textContent = S.hintCat ? catLabel(S.catKey) : "";
-  const seesClue = !und && S.hintMode==="imposter" && isImp && !!S.clue;
+  const seesClue = !und && S.hintMode==="imposter" && isImp && !!S.clue;   /* never in conspiracy: S.clue is empty */
   $("#front-hint").style.display = seesClue ? "" : "none";
   $("#clue-word").textContent = seesClue ? S.clue : "";
   /* your own assignment if you are the one carrying it, or - if you are the
@@ -1157,9 +1344,15 @@ function paintSeat(){
      are the odd one, and handing the blackmail word to exactly that seat
      would have said it out loud: you are the only person reading this, so
      you are the odd one. That is the one thing undercover must never leak. */
-  const task = isBm ? S.bmWords[S.seat] : (!und && isImp && S.bmImp) ? someBm.join(" · ") : "";
+  /* in conspiracy the imposter reads back the word they planted themselves,
+     which is a different sentence from being told one somebody else chose */
+  const con = S.mode === "conspiracy";
+  const mine = con && isImp ? (S.plants[S.seat] || "") : "";
+  const task = isBm ? S.bmWords[S.seat]
+             : mine ? mine
+             : (!und && !con && isImp && S.bmImp) ? someBm.join(" · ") : "";
   $("#front-task").style.display = task ? "" : "none";
-  $("#task-label").textContent = task ? (isBm ? t("bm_you") : t("bm_imp")) : "";
+  $("#task-label").textContent = task ? (isBm ? t("bm_you") : mine ? t("bm_mine") : t("bm_imp")) : "";
   $("#task-word").textContent = task || "";
   const last = S.seat >= S.players;
   $("#btn-next").textContent = last ? t("start") : t("next");
@@ -1282,6 +1475,23 @@ onTap($("#btn-next"), ()=>{
   hideCard();
   if(S.seat >= S.players){ startRound(); }
   else { S.seat++; paintSeat(); }
+});
+
+$("#write-input").oninput = () => {
+  $("#btn-wnext").disabled = !$("#write-input").value.trim();
+};
+onTap($("#btn-wready"), openWrite);
+onTap($("#btn-wnext"), ()=>{
+  if(!takeWrite()) return;
+  $("#write-input").blur();          /* drop the keyboard before the hand-off */
+  if(S.wseat >= S.players){ composeConspiracy(); paintSeat(); show("s-deal"); }
+  else { S.wseat++; paintWrite(); }
+});
+/* only out to settings. stepping back inside this pass would put the previous
+   seat's word back on screen, and that word is theirs alone until it is dealt */
+onTap($("#btn-wback"), ()=>{
+  $("#write-input").blur();
+  paintSetup(); show("s-setup");
 });
 
 /* step back a seat, or out to settings from the first one */
@@ -1419,6 +1629,20 @@ function doReveal(){
   if(S.impSet.size === 0) pill(t("noone"), "none");
   else if(S.impSet.size === S.players) pill(t("everyone"), "all");
   else Array.from(S.impSet).sort((a,b)=>a-b).forEach(n=>pill(seatLabel(n)));
+  /* one word in five gets played; showing the rest is what makes writing
+     them worth a pass of the phone. unattributed - whose was whose is the
+     table's business, not the app's. */
+  const wBox = $("#rev-written-box");
+  const written = Object.keys(S.pool).map(k=>S.pool[k]).filter(Boolean);
+  if(S.mode === "conspiracy" && written.length){
+    wBox.style.display = "";
+    const wl = $("#rev-written"); wl.innerHTML = "";
+    written.forEach(w=>{
+      const d = document.createElement("div");
+      d.className = "imp-pill bm" + (w === S.word ? " hit" : "");
+      d.textContent = w; wl.appendChild(d);
+    });
+  } else wBox.style.display = "none";
   /* who was carrying a word, and which one - the app never saw whether they
      got it out, so it just puts it on the table and lets the room decide */
   const bmBox = $("#rev-bm-box");

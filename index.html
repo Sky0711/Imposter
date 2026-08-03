@@ -181,7 +181,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   display:flex;align-items:center;justify-content:center;
   background:transparent;border:1px solid rgba(244,236,224,.18);color:var(--bone);
 }
-.diebtn .die{width:21px;height:21px;fill:currentColor;opacity:.45;transition:opacity .16s ease}
+.diebtn .die{width:21px;height:21px;fill:currentColor;opacity:.45;transition:opacity .16s ease, transform .2s cubic-bezier(.3,1.3,.5,1)}
 .diebtn:active{background:var(--velvet)}
 .diebtn.on{color:var(--accent);border-color:var(--accent)}
 .diebtn.on .die{opacity:1}
@@ -782,7 +782,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "8.1";
+const APP_VERSION = "8.2";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list
@@ -1078,9 +1078,14 @@ const PIPS = {
   6:[[8,7.4],[16,7.4],[8,12],[16,12],[8,16.6],[16,16.6]]
 };
 function paintDie(dieSel, n){
-  const g = $(dieSel).querySelector(".pips");
+  const svg = $(dieSel).querySelector(".die");
+  const g = svg && svg.querySelector(".pips");
   if(!g) return;
   const face = Math.max(0, Math.min(6, n));
+  /* Past six the face has nowhere left to go, so the die turns instead -
+     a step of the wrist for every step of the number, so the control still
+     answers a press it can no longer count. */
+  svg.style.transform = n > 6 ? "rotate(" + (n - 6) * 15 + "deg)" : "";
   while(g.firstChild) g.removeChild(g.firstChild);
   PIPS[face].forEach(pt => {
     const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");

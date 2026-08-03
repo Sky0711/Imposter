@@ -322,6 +322,12 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   gap:16px;text-align:center;width:100%;
 }
 .wform{gap:18px}
+/* still your turn, and still your name - the cover said it in 88px and the
+   form used to drop it entirely, leaving a badge reading only "player" */
+.wwho{
+  font-family:var(--display);font-weight:800;font-size:23px;line-height:1.1;
+  letter-spacing:-.01em;color:var(--accent);word-break:break-word;max-width:100%;
+}
 .wask{font-size:17px;line-height:1.45;color:var(--dim-2);max-width:26ch}
 /* the imposter is asked for a blackmail, so the ask wears the blackmail's
    black - the same panel their card will show it back in later */
@@ -607,6 +613,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
         <button class="btn ghost" id="btn-wready" data-t="wready">I have it</button>
       </div>
       <div class="wform" id="write-form" style="display:none">
+        <div class="wwho" id="write-who"></div>
         <div class="badge" id="write-badge">Word</div>
         <div class="wask" id="write-ask"></div>
         <div class="wrows" id="write-rows"></div>
@@ -732,7 +739,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "7.2";
+const APP_VERSION = "7.3";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list
@@ -839,9 +846,9 @@ vote_note:"Everyone votes once",thevote:"the vote",
 caught:"Caught!",partial:"Half right",missed:"Got away!",
 bm:"Blackmailed",bm_h:"Honest, but must smuggle a word in",
 bmimp:"Imposter sees blackmail",bmimp_h:"Knows the word to listen for",
-bmeach:"Blackmails",bmeach_h:"Words each imposter plants",
+bmeach:"Words each",bmeach_h:"Everyone writes this many",
 bmpick:"Imposter picks the target",bmpick_h:"Otherwise it lands at random",
-ask_to:"Who says it",wready:"I have the phone",note_write:"Nobody else looks.",
+ask_to:"Who says it",wready:"Add your word",note_write:"Nobody else looks.",
 ask_word:"Write a secret word. One of the words written tonight becomes the round's.",
 ask_plant:"Write a word to plant. Somebody will be made to say it \u2014 and it will not be you.",
 wordph:"a word",bm_mine:"The blackmail you planted:",thewritten:"the words you wrote",
@@ -873,9 +880,9 @@ caught:"Ulovljeni!",partial:"Napola točno",missed:"Izvukli su se!",
    put a gender on whoever happens to be holding the phone */
 bm:"Ucijenjeni",bm_h:"Pošten je, ali mora ubaciti riječ",
 bmimp:"Uljez vidi ucjenu",bmimp_h:"Zna koju riječ čekati",
-bmeach:"Ucjene",bmeach_h:"Koliko riječi uljez podmeće",
+bmeach:"Riječi",bmeach_h:"Toliko ih svatko piše",
 bmpick:"Uljez bira kome",bmpick_h:"Inače ide nasumično",
-ask_to:"Tko je govori",wready:"Kod mene je",note_write:"Nitko drugi ne gleda.",
+ask_to:"Tko je govori",wready:"Dodaj riječ",note_write:"Nitko drugi ne gleda.",
 ask_word:"Napiši tajnu riječ. Jedna od večerašnjih riječi bit će rundina.",
 ask_plant:"Napiši riječ koju podmećeš. Netko će je morati reći \u2014 i to nećeš biti ti.",
 wordph:"riječ",bm_mine:"Ucjena koju si podmetnuo:",thewritten:"napisane riječi",
@@ -1290,9 +1297,12 @@ function deal(){
 /* Shut, then open: the prompt says whether you are the imposter, so it must
    not be on screen while the phone is crossing the table. One deliberate tap
    opens it, the same bargain the card makes with its cover. */
-/* how many words this seat has to write: one if they are honest, and one per
-   blackmail the imposters were told to plant if they are not */
-function writeRows(seat){ return S.impSet.has(seat) ? Math.max(1, S.blackmail) : 1; }
+/* The same number for every seat, always. An imposter who had two words to
+   write while everybody else had one held the phone visibly longer, and how
+   long you hold the phone is the one thing the whole table can see. So the
+   honest seats write the same number of candidates that the imposters plant,
+   and every turn looks and lasts the same. */
+function writeRows(){ return Math.max(1, S.blackmail); }
 
 function paintWrite(){
   const n = S.wseat, isImp = S.impSet.has(n);
@@ -1302,12 +1312,13 @@ function paintWrite(){
   $("#write-cover").style.display = "";
   $("#write-form").style.display = "none";
   $("#write-form").classList.toggle("imp", isImp);
+  $("#write-who").textContent = seatLabel(n);
   $("#write-badge").textContent = isImp ? t("imposter") : t("word");
   $("#write-badge").classList.toggle("imp", isImp);
   $("#write-ask").textContent = isImp ? t("ask_plant") : t("ask_word");
   const picks = isImp && S.bmPick;
   const box = $("#write-rows"); box.innerHTML = "";
-  const rows = writeRows(n);
+  const rows = writeRows();
   for(let r=0; r<rows; r++){
     const row = document.createElement("div"); row.className = "wrow";
     const inp = document.createElement("input");
@@ -1326,9 +1337,19 @@ function paintWrite(){
         const b = document.createElement("button");
         b.type = "button"; b.dataset.seat = seat;
         b.textContent = seatLabel(seat);
+        /* taking a seat another row holds hands that row this one's seat,
+           so a change is one tap and never two */
         b.onclick = ()=>{
+          const held = to.querySelector("button.on");
+          const other = $$("#write-rows .wto").find(o => o !== to &&
+            o.querySelector('button.on[data-seat="'+seat+'"]'));
+          if(other && held){
+            other.querySelectorAll("button").forEach(x=>x.classList.remove("on"));
+            const give = other.querySelector('button[data-seat="'+held.dataset.seat+'"]');
+            if(give) give.classList.add("on");
+          }
           to.querySelectorAll("button").forEach(x=>x.classList.remove("on"));
-          b.classList.add("on"); buzz(10); paintWriteTargets(); paintWriteReady();
+          b.classList.add("on"); buzz(10); paintWriteReady();
         };
         to.appendChild(b);
       }
@@ -1336,29 +1357,30 @@ function paintWrite(){
     }
     box.appendChild(row);
   }
-  paintWriteTargets();
+  /* Aimed at random up front, so the imposter has nothing they must tap. An
+     aim they have to make is an extra beat everybody can see; an aim they may
+     change is a risk they choose to take, which is the game. */
+  if(picks) preAim(n);
   $("#btn-wnext").textContent = n >= S.players ? t("start") : t("next");
   paintWriteReady();
 }
 
-/* a seat one of your words already points at cannot take a second */
-function paintWriteTargets(){
-  const taken = new Set();
-  $$("#write-rows .wto button.on").forEach(b=>taken.add(b.dataset.seat));
-  $$("#write-rows .wto").forEach(to=>{
-    const mine = to.querySelector("button.on");
-    to.querySelectorAll("button").forEach(b=>{
-      b.disabled = b !== mine && taken.has(b.dataset.seat);
-    });
+/* one seat per word, drawn at random, before the imposter has touched a thing */
+function preAim(self){
+  const free = [];
+  for(let i=1;i<=S.players;i++) if(i !== self) free.push(i);
+  for(let i=free.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [free[i],free[j]]=[free[j],free[i]]; }
+  $$("#write-rows .wto").forEach((to, i) => {
+    const b = to.querySelector('button[data-seat="'+free[i]+'"]');
+    if(b) b.classList.add("on");
   });
 }
 
-/* every word filled in, and every one of them aimed if aiming is on */
+/* the words are the only thing that has to be filled in - every aim is
+   already made, and the button never waits on one */
 function paintWriteReady(){
   const rows = $$("#write-rows .wrow");
-  const ok = rows.length && rows.every(r =>
-    r.querySelector("input").value.trim() &&
-    (!r.querySelector(".wto") || r.querySelector(".wto button.on")));
+  const ok = rows.length && rows.every(r => r.querySelector("input").value.trim());
   $("#btn-wnext").disabled = !ok;
 }
 
@@ -1386,8 +1408,8 @@ function takeWrite(){
              to: chosen ? parseInt(chosen.dataset.seat,10) : 0 };
   }).filter(x => x.word);
   if(got.length !== rows.length) return false;
-  if(S.impSet.has(S.wseat)) S.plants[S.wseat] = got;   /* [{word,to}] */
-  else S.pool[S.wseat] = got[0].word;
+  if(S.impSet.has(S.wseat)) S.plants[S.wseat] = got;              /* [{word,to}] */
+  else S.pool[S.wseat] = got.map(x=>x.word);                      /* [word]     */
   return true;
 }
 
@@ -1403,8 +1425,15 @@ function allPlants(){
   return out;
 }
 
+/* every candidate word the honest seats wrote, flattened out of their seats */
+function allWritten(){
+  const out = [];
+  Object.keys(S.pool).forEach(k => (S.pool[k]||[]).forEach(w => { if(w) out.push(w); }));
+  return out;
+}
+
 function composeConspiracy(){
-  const cand = Object.keys(S.pool).map(k=>S.pool[k]).filter(Boolean);
+  const cand = allWritten();
   const plants = allPlants();
   const same = (a,b) => a.toLocaleLowerCase() === b.toLocaleLowerCase();
   /* a secret that is also somebody's plant would set the blackmailed player
@@ -1760,7 +1789,7 @@ function doReveal(){
      them worth a pass of the phone. unattributed - whose was whose is the
      table's business, not the app's. */
   const wBox = $("#rev-written-box");
-  const written = Object.keys(S.pool).map(k=>S.pool[k]).filter(Boolean);
+  const written = allWritten();
   if(S.mode === "conspiracy" && written.length){
     wBox.style.display = "";
     const wl = $("#rev-written"); wl.innerHTML = "";

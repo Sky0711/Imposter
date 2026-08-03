@@ -637,7 +637,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "6.7";
+const APP_VERSION = "6.8";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list
@@ -908,9 +908,13 @@ function paintSetup(){
   $("#f-hintw").style.display = clues ? "" : "none";
   /* and the style only matters while a clue is actually being handed over */
   $("#f-hstyle").style.display = clues && S.hintMode === "imposter" ? "" : "none";
-  /* nothing to ask while no blackmail is being dealt, and nothing to ask in
-     undercover either - there the imposter is never told regardless */
-  $("#f-bmimp").style.display = clues && S.blackmail > 0 ? "" : "none";
+  /* shown wherever its sibling above is shown, which is the point of them
+     sitting together. it was hidden while the blackmail count sat at zero -
+     but zero is the default, so the setting could not be found at all, and
+     raising the imposters can push that count to zero on its own and take
+     the row away while you are looking at it. only undercover hides it, and
+     for the real reason: there the imposter is never told regardless. */
+  $("#f-bmimp").style.display = clues ? "" : "none";
   $$("#seg-hstyle button").forEach(b=>{
     b.textContent = t("hs_" + b.dataset.hs);
     b.classList.toggle("on", b.dataset.hs === S.hintStyle);

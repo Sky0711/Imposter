@@ -579,7 +579,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "5.9";
+const APP_VERSION = "6.0";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list
@@ -774,17 +774,22 @@ function load(){
 function clamp(){
   S.players = Math.max(3, Math.min(16, S.players));
   S.minutes = Math.max(0, Math.min(15, S.minutes));
-  /* a fixed count stays under half the table, or the game is not worth
-     playing. a ceiling may go all the way up - it is a maximum, not a
-     promise, so "up to everyone" is a legitimate thing to ask for. */
-  const maxImp = S.randImp ? S.players : Math.max(1, Math.floor((S.players-1)/2));
-  S.imposters = Math.max(1, Math.min(maxImp, S.imposters));
-  /* the blackmailed are honest players, so they cost the table less than an
-     imposter does - but between them they still must not outnumber the seats
-     playing it straight. a ceiling, again, may reach as far as it likes. */
-  const maxBm = S.randBm ? Math.max(0, S.players - S.imposters)
-                         : Math.max(0, Math.floor(S.players/2) - S.imposters);
-  S.blackmail = Math.max(0, Math.min(maxBm, S.blackmail));
+  /* Both counts run the whole length of the table, and the die does not
+     change what you may ask for - it only decides whether the number is
+     the count or a ceiling over it. Tying the limit to the die meant
+     wanting two imposters at a small table forced a detour: switch the die
+     on, raise the number, switch it back, and watch the number fall again.
+     Whether half a table of imposters makes for a good round is the
+     table's call, and the hint under the label says what we think of it.
+     Zero is on the list too: everybody holds the word and the round is
+     spent hunting somebody who was never dealt. Worth playing once, and
+     worth playing beside a blackmailed seat, where something genuinely odd
+     is still being said and there is no imposter to pin it on. */
+  S.imposters = Math.max(0, Math.min(S.players, S.imposters));
+  /* what is left of the table once the imposters have their seats. the
+     blackmailed are honest players, so they need no guardrail of their own
+     - they only need a seat that an imposter is not already sitting in. */
+  S.blackmail = Math.max(0, Math.min(S.players - S.imposters, S.blackmail));
 }
 
 function paintText(){
@@ -793,10 +798,13 @@ function paintText(){
   $("#btn-pause").textContent = S.running ? t("pause") : t("resume");
 }
 
-/* a stepper's number: the count itself, and whether it is a ceiling */
+/* a stepper's number: the count itself, and whether it is a ceiling.
+   "≤0" says nothing that "0" does not, so the prefix is dropped there -
+   but the die keeps reporting the setting truthfully, or tapping it at
+   zero would look like a dead control. */
 function paintCount(sel, n, rnd){
   const el = $(sel);
-  el.querySelector("span").textContent = rnd ? "≤" + n : n;
+  el.querySelector("span").textContent = rnd && n > 0 ? "≤" + n : n;
   el.classList.toggle("rand", rnd);
   el.setAttribute("aria-pressed", rnd ? "true" : "false");
   el.setAttribute("aria-label", t("upto"));
@@ -809,8 +817,7 @@ function paintSetup(){
   document.documentElement.dataset.mode = S.mode;
   $("#v-players").textContent = S.players;
   paintCount("#v-imposters", S.imposters, S.randImp);
-  /* "up to" only reads as a secret when there is something to be secret about */
-  paintCount("#v-blackmail", S.blackmail, S.randBm && !!S.blackmail);
+  paintCount("#v-blackmail", S.blackmail, S.randBm);
   $("#v-minutes").textContent = S.minutes;
   $("#app-version").textContent = "v" + APP_VERSION;
   $("#eyebrow-line").textContent = t("tableline").replace("{n}", S.players);
@@ -837,7 +844,7 @@ function paintSetup(){
   /* after paintText, which rewrites every [data-t] from the table. a count
      that has become a ceiling explains itself where its own label lives,
      which is also how the tap teaches itself the first time. */
-  if(S.randImp) $("#h-imposters").textContent = t("upto_h");
+  if(S.randImp && S.imposters) $("#h-imposters").textContent = t("upto_h");
   if(S.randBm && S.blackmail) $("#h-blackmail").textContent = t("upto_h");
   save();
 }
@@ -1229,8 +1236,10 @@ function paintVoteMeta(){
    a way to say it. Seat 0 is that option; it only appears where it can be
    right, so a fixed-count round never offers a trap. */
 /* only the imposter count decides this - a secret number of blackmailed
-   players changes nothing about whether anybody was odd */
-function nobodyOption(){ return S.randImp; }
+   players changes nothing about whether anybody was odd. a ceiling can roll
+   none, and a fixed zero is none by definition; either way "nobody" is an
+   answer that can be right, so the ballot has to offer it. */
+function nobodyOption(){ return S.randImp || S.imposters === 0; }
 
 function openVote(){
   S.votes = new Array(S.players+1).fill(0);

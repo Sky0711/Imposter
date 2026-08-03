@@ -782,7 +782,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "8.2";
+const APP_VERSION = "8.3";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list
@@ -1082,10 +1082,12 @@ function paintDie(dieSel, n){
   const g = svg && svg.querySelector(".pips");
   if(!g) return;
   const face = Math.max(0, Math.min(6, n));
-  /* Past six the face has nowhere left to go, so the die turns instead -
-     a step of the wrist for every step of the number, so the control still
-     answers a press it can no longer count. */
-  svg.style.transform = n > 6 ? "rotate(" + (n - 6) * 15 + "deg)" : "";
+  /* Past six the face has nowhere left to go, so the die turns instead - a
+     quarter turn for every step of the number. Ninety degrees leaves the
+     rounded square where it was but stands the six on its side, three
+     columns of two where there were two of three, so each press reads as
+     the die being rolled over rather than nudged. */
+  svg.style.transform = n > 6 ? "rotate(" + (n - 6) * 90 + "deg)" : "";
   while(g.firstChild) g.removeChild(g.firstChild);
   PIPS[face].forEach(pt => {
     const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");

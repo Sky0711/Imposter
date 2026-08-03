@@ -302,6 +302,12 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   font-family:var(--display);font-weight:800;font-size:clamp(20px,5.4vw,26px);
   line-height:1.15;letter-spacing:.01em;text-transform:uppercase;color:var(--bone);
 }
+/* when it is due, if the imposter set a time on it */
+.info.bm .when{
+  font-family:var(--display);font-weight:700;font-size:15.5px;letter-spacing:.02em;
+  color:var(--accent);text-transform:uppercase;
+}
+.info.bm .when:empty{display:none}
 .rev-hint{font-size:16px;color:var(--dim-2);text-align:center;max-width:28ch;margin-top:-8px}
 /* Every card looks the same from a step away. A red imposter card was
    readable across the table - the one person who must not be spotted was
@@ -541,6 +547,11 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
       <div class="switch" id="sw-bmpick"><i></i></div>
     </div>
 
+    <div class="field" id="f-bmwhen">
+      <div><div class="label" data-t="bmwhen">Imposter picks the round</div><div class="hint" data-t="bmwhen_h">Which time round the word is due</div></div>
+      <div class="switch" id="sw-bmwhen"><i></i></div>
+    </div>
+
     <div class="field">
       <div><div class="label" data-t="timer">Round timer</div><div class="hint" data-t="timer_h">Minutes of arguing. 0 turns it off.</div></div>
       <div class="stepper" data-step="minutes">
@@ -650,6 +661,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
           </div>
           <div class="info bm" id="front-task" style="display:none">
             <span class="lbl" id="task-label"></span><b class="v" id="task-word"></b>
+            <span class="when" id="task-when"></span>
           </div>
           <div class="badge" id="front-badge">Word</div>
         </div>
@@ -739,7 +751,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "7.3";
+const APP_VERSION = "7.4";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list
@@ -846,9 +858,11 @@ vote_note:"Everyone votes once",thevote:"the vote",
 caught:"Caught!",partial:"Half right",missed:"Got away!",
 bm:"Blackmailed",bm_h:"Honest, but must smuggle a word in",
 bmimp:"Imposter sees blackmail",bmimp_h:"Knows the word to listen for",
-bmeach:"Words each",bmeach_h:"Everyone writes this many",
+bmeach:"Blackmails",bmeach_h:"Everyone writes this many words",
 bmpick:"Imposter picks the target",bmpick_h:"Otherwise it lands at random",
-ask_to:"Who says it",wready:"Add your word",note_write:"Nobody else looks.",
+ask_to:"Who says it",ask_when:"Which time round",
+bmwhen:"Imposter picks the round",bmwhen_h:"Which time round the word is due",
+inround:"on time round {n}",wready:"Add your word",note_write:"Nobody else looks.",
 ask_word:"Write a secret word. One of the words written tonight becomes the round's.",
 ask_plant:"Write a word to plant. Somebody will be made to say it \u2014 and it will not be you.",
 wordph:"a word",bm_mine:"The blackmail you planted:",thewritten:"the words you wrote",
@@ -880,9 +894,11 @@ caught:"Ulovljeni!",partial:"Napola točno",missed:"Izvukli su se!",
    put a gender on whoever happens to be holding the phone */
 bm:"Ucijenjeni",bm_h:"Pošten je, ali mora ubaciti riječ",
 bmimp:"Uljez vidi ucjenu",bmimp_h:"Zna koju riječ čekati",
-bmeach:"Riječi",bmeach_h:"Toliko ih svatko piše",
+bmeach:"Ucjene",bmeach_h:"Toliko riječi svatko piše",
 bmpick:"Uljez bira kome",bmpick_h:"Inače ide nasumično",
-ask_to:"Tko je govori",wready:"Dodaj riječ",note_write:"Nitko drugi ne gleda.",
+ask_to:"Tko je govori",ask_when:"U kojem krugu",
+bmwhen:"Uljez bira kad",bmwhen_h:"U kojem krugu riječ mora pasti",
+inround:"u {n}. krugu",wready:"Dodaj riječ",note_write:"Nitko drugi ne gleda.",
 ask_word:"Napiši tajnu riječ. Jedna od večerašnjih riječi bit će rundina.",
 ask_plant:"Napiši riječ koju podmećeš. Netko će je morati reći \u2014 i to nećeš biti ti.",
 wordph:"riječ",bm_mine:"Ucjena koju si podmetnuo:",thewritten:"napisane riječi",
@@ -893,10 +909,10 @@ tableline:"igra u krug · {n} igrača"}
 
 /* ============ state ============ */
 /* cats: which categories are in play. empty means all of them. */
-const S = {players:4, imposters:1, blackmail:0, randImp:false, randBm:false, touched:"", bmImp:true, bmPick:false, minutes:4, hintCat:true, hintMode:"imposter", hintStyle:"simple", vote:true, mode:"classic", lang:"hr", cats:[], names:[],
+const S = {players:4, imposters:1, blackmail:0, randImp:false, randBm:false, touched:"", bmImp:true, bmPick:false, bmWhen:false, minutes:4, hintCat:true, hintMode:"imposter", hintStyle:"simple", vote:true, mode:"classic", lang:"hr", cats:[], names:[],
            word:"", twin:"", clue:"", catKey:"", impSet:new Set(), bmSet:new Set(), bmWords:{},
            /* conspiracy: what each seat wrote, and what each imposter planted */
-           pool:{}, plants:{}, wseat:1,
+           pool:{}, plants:{}, bmRound:{}, wseat:1,
            votes:null, seat:1, first:1, left:0, timer:null, running:false};
 
 const $ = s => document.querySelector(s);
@@ -915,7 +931,7 @@ function save(){
     localStorage.setItem(SAVE_KEY, JSON.stringify({
       players:S.players, imposters:S.imposters, blackmail:S.blackmail,
       randImp:S.randImp, randBm:S.randBm, minutes:S.minutes,
-      hintCat:S.hintCat, hintMode:S.hintMode, hintStyle:S.hintStyle, bmImp:S.bmImp, bmPick:S.bmPick, vote:S.vote, mode:S.mode, lang:S.lang, cats:S.cats,
+      hintCat:S.hintCat, hintMode:S.hintMode, hintStyle:S.hintStyle, bmImp:S.bmImp, bmPick:S.bmPick, bmWhen:S.bmWhen, vote:S.vote, mode:S.mode, lang:S.lang, cats:S.cats,
       names:S.names.slice(0,16)
     }));
   }catch(e){}
@@ -942,6 +958,7 @@ function load(){
     if(typeof d.vote === "boolean") S.vote = d.vote;
     if(typeof d.bmImp === "boolean") S.bmImp = d.bmImp;
     if(typeof d.bmPick === "boolean") S.bmPick = d.bmPick;
+    if(typeof d.bmWhen === "boolean") S.bmWhen = d.bmWhen;
     if(["classic","undercover","conspiracy"].indexOf(d.mode) >= 0) S.mode = d.mode;
     if(["simple","niche","long","random"].indexOf(d.hintStyle) >= 0) S.hintStyle = d.hintStyle;
     /* "all" was dropped as an option - fold old saves onto imposter-only */
@@ -1054,6 +1071,8 @@ function paintSetup(){
      there to answer it */
   $("#f-bmpick").style.display = con ? "" : "none";
   $("#sw-bmpick").classList.toggle("on", S.bmPick);
+  $("#f-bmwhen").style.display = con ? "" : "none";
+  $("#sw-bmwhen").classList.toggle("on", S.bmWhen);
   /* no clues at all in undercover - the other word is the clue */
   const clues = S.mode !== "undercover" && !con;
   $("#f-hintw").style.display = clues ? "" : "none";
@@ -1227,7 +1246,7 @@ function deal(){
      writing pass - that is the pass where they plant their blackmail. */
   if(S.mode === "conspiracy"){
     S.catKey = ""; S.word = ""; S.twin = ""; S.clue = "";
-    S.bmSet = new Set(); S.bmWords = {}; S.pool = {}; S.plants = {};
+    S.bmSet = new Set(); S.bmWords = {}; S.bmRound = {}; S.pool = {}; S.plants = {};
     drawRoles();
     S.votes = null;
     S.wseat = 1;
@@ -1355,12 +1374,33 @@ function paintWrite(){
       }
       row.appendChild(to);
     }
+    if(isImp && S.bmWhen){
+      const wh = document.createElement("div"); wh.className = "wto wwhen";
+      const lb = document.createElement("div"); lb.className = "lb";
+      lb.textContent = t("ask_when"); wh.appendChild(lb);
+      for(let r2=1; r2<=3; r2++){
+        const b = document.createElement("button");
+        b.type = "button"; b.dataset.when = r2; b.textContent = r2;
+        b.onclick = ()=>{
+          wh.querySelectorAll("button").forEach(x=>x.classList.remove("on"));
+          b.classList.add("on"); buzz(10);
+        };
+        wh.appendChild(b);
+      }
+      row.appendChild(wh);
+    }
     box.appendChild(row);
   }
   /* Aimed at random up front, so the imposter has nothing they must tap. An
      aim they have to make is an extra beat everybody can see; an aim they may
      change is a risk they choose to take, which is the game. */
   if(picks) preAim(n);
+  /* the round comes pre-chosen for the same reason the seat does: nothing
+     the imposter is obliged to tap, so their turn is no longer than anyone's */
+  $$("#write-rows .wwhen").forEach(wh=>{
+    const b = wh.querySelectorAll("button")[Math.floor(Math.random()*3)];
+    if(b) b.classList.add("on");
+  });
   $("#btn-wnext").textContent = n >= S.players ? t("start") : t("next");
   paintWriteReady();
 }
@@ -1403,9 +1443,11 @@ function openWrite(){
 function takeWrite(){
   const rows = $$("#write-rows .wrow");
   const got = rows.map(r => {
-    const chosen = r.querySelector(".wto button.on");
+    const chosen = r.querySelector(".wto:not(.wwhen) button.on");
+    const when   = r.querySelector(".wwhen button.on");
     return { word: r.querySelector("input").value.trim().slice(0,20),
-             to: chosen ? parseInt(chosen.dataset.seat,10) : 0 };
+             to: chosen ? parseInt(chosen.dataset.seat,10) : 0,
+             when: when ? parseInt(when.dataset.when,10) : 0 };
   }).filter(x => x.word);
   if(got.length !== rows.length) return false;
   if(S.impSet.has(S.wseat)) S.plants[S.wseat] = got;              /* [{word,to}] */
@@ -1420,7 +1462,7 @@ function takeWrite(){
 function allPlants(){
   const out = [];
   Object.keys(S.plants).forEach(k => (S.plants[k]||[]).forEach(p => {
-    if(p.word) out.push({from:parseInt(k,10), word:p.word, to:p.to||0});
+    if(p.word) out.push({from:parseInt(k,10), word:p.word, to:p.to||0, when:p.when||0});
   }));
   return out;
 }
@@ -1444,19 +1486,19 @@ function composeConspiracy(){
   const free = [];
   for(let i=1;i<=S.players;i++) if(!S.impSet.has(i)) free.push(i);
   for(let i=free.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [free[i],free[j]]=[free[j],free[i]]; }
-  S.bmSet = new Set(); S.bmWords = {};
+  S.bmSet = new Set(); S.bmWords = {}; S.bmRound = {};
   const take = seat => { const i = free.indexOf(seat); if(i>=0) free.splice(i,1); };
   /* aimed words go first and keep their seat; the rest fall where they fall.
      an aim at a seat already carrying one - or at an imposter, which the
      aimer had no way of knowing - drops through to the same random pile,
      so a collision costs the plant its aim and never the round. */
   plants.filter(p=>p.to && free.indexOf(p.to)>=0).forEach(p=>{
-    take(p.to); S.bmSet.add(p.to); S.bmWords[p.to] = p.word;
+    take(p.to); S.bmSet.add(p.to); S.bmWords[p.to] = p.word; S.bmRound[p.to] = p.when;
   });
   plants.filter(p=>!(p.to && S.bmWords[p.to] === p.word)).forEach(p=>{
     const to = free.shift();
     if(!to) return;                 /* clamp keeps this from happening */
-    S.bmSet.add(to); S.bmWords[to] = p.word;
+    S.bmSet.add(to); S.bmWords[to] = p.word; S.bmRound[to] = p.when;
   });
   S.first = 1+Math.floor(Math.random()*S.players);
   S.seat = 1;
@@ -1504,13 +1546,22 @@ function paintSeat(){
   /* in conspiracy the imposter reads back the word they planted themselves,
      which is a different sentence from being told one somebody else chose */
   const con = S.mode === "conspiracy";
-  const mine = con && isImp ? (S.plants[S.seat]||[]).map(p=>p.word).filter(Boolean).join(" · ") : "";
+  /* the imposter reads their own plants back with the round each is due, so
+     they know not just what to listen for but when it should land */
+  const mine = con && isImp
+    ? (S.plants[S.seat]||[]).filter(p=>p.word)
+        .map(p=>p.word + (p.when ? " (" + p.when + ")" : "")).join(" · ")
+    : "";
   const task = isBm ? S.bmWords[S.seat]
              : mine ? mine
              : (!und && !con && isImp && S.bmImp) ? someBm.join(" · ") : "";
   $("#front-task").style.display = task ? "" : "none";
   $("#task-label").textContent = task ? (isBm ? t("bm_you") : mine ? t("bm_mine") : t("bm_imp")) : "";
   $("#task-word").textContent = task || "";
+  /* only the seat carrying it is held to the clock; the imposter's own line
+     already carries each round in brackets beside its word */
+  const due = isBm && S.bmRound[S.seat];
+  $("#task-when").textContent = task && due ? t("inround").replace("{n}", due) : "";
   const last = S.seat >= S.players;
   $("#btn-next").textContent = last ? t("start") : t("next");
   $("#btn-next").disabled = true;
@@ -1809,7 +1860,8 @@ function doReveal(){
       const d = document.createElement("div"); d.className = "imp-pill bm";
       /* an em dash, not the seat label's own middle dot - with names on,
          "1 · Marko · Helikopter" reads as three people */
-      d.textContent = seatLabel(n) + " — " + S.bmWords[n];
+      d.textContent = seatLabel(n) + " — " + S.bmWords[n]
+        + (S.bmRound[n] ? " (" + S.bmRound[n] + ")" : "");
       bl.appendChild(d);
     });
   } else bmBox.style.display = "none";
@@ -1903,6 +1955,7 @@ $("#sw-hintw").onclick = ()=>{ S.hintMode = S.hintMode==="imposter" ? "off" : "i
 $("#sw-vote").onclick  = ()=>{ S.vote = !S.vote; buzz(14); paintSetup(); };
 $("#sw-bmimp").onclick = ()=>{ S.bmImp = !S.bmImp; buzz(14); paintSetup(); };
 $("#sw-bmpick").onclick = ()=>{ S.bmPick = !S.bmPick; buzz(14); paintSetup(); };
+$("#sw-bmwhen").onclick = ()=>{ S.bmWhen = !S.bmWhen; buzz(14); paintSetup(); };
 $$("#seg-lang button").forEach(b=>{
   b.onclick = ()=>{ S.lang = b.dataset.lang; buzz(10); paintSetup(); };
 });

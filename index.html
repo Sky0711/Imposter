@@ -126,7 +126,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 }
 .field > :first-child{flex:1 1 165px;min-width:0}
 .field > :last-child{margin-left:auto}
-.field .label{font-size:16px;font-weight:600}
+.field .label{font-size:16px;font-weight:600;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .field .hint{font-size:13.5px;color:var(--dim);margin-top:4px;line-height:1.4}
 .stepper{display:flex;align-items:center;gap:6px;flex:none}
 .stepper button{
@@ -147,19 +147,19 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   font-family:var(--display);font-weight:800;font-size:23px;min-width:50px;text-align:center;
   line-height:1;
 }
-/* Only where it is a button - players and the clock are plain readouts and
-   must not borrow an affordance they do not have. The die is the whole
-   point: a dashed border said "press me" but never said what pressing
-   would do. Ghosted, the count is exactly the number shown; lit, the
-   number is a ceiling and the round rolls somewhere under it. */
-.stepper button.val{
-  display:flex;align-items:center;justify-content:center;gap:7px;
-  width:auto;min-width:80px;height:50px;padding:0 11px;border-radius:14px;
-  background:transparent;border:1px solid rgba(244,236,224,.16);color:var(--bone);
+/* The die sits with the name of the thing it governs, not with the number:
+   it is a question about the imposters, not about the digit. Ghosted, the
+   count is exactly what it says; lit, it is a ceiling and the round rolls
+   somewhere under it - which the number then echoes with a ≤. */
+.diebtn{
+  width:40px;height:40px;border-radius:12px;flex:none;
+  display:flex;align-items:center;justify-content:center;
+  background:transparent;border:1px solid rgba(244,236,224,.18);color:var(--bone);
 }
-.stepper button.val .die{width:22px;height:22px;flex:none;fill:currentColor;opacity:.5;transition:opacity .16s ease}
-.stepper button.val.rand{color:var(--accent);border-color:var(--accent)}
-.stepper button.val.rand .die{opacity:1}
+.diebtn .die{width:21px;height:21px;fill:currentColor;opacity:.45;transition:opacity .16s ease}
+.diebtn:active{background:var(--velvet)}
+.diebtn.on{color:var(--accent);border-color:var(--accent)}
+.diebtn.on .die{opacity:1}
 .switch{
   width:56px;height:32px;border-radius:20px;background:var(--velvet);
   border:1px solid rgba(244,236,224,.12);position:relative;flex:none;transition:background .18s ease;
@@ -435,16 +435,22 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
     </div>
 
     <div class="field">
-      <div><div class="label" data-t="imposters">Imposters</div><div class="hint" id="h-imposters" data-t="imposters_h">Keep it under a third of the table</div></div>
+      <div>
+        <div class="label"><span data-t="imposters">Imposters</span><button class="diebtn" id="d-imposters" data-rnd="randImp"><svg class="die" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.6" y="2.6" width="18.8" height="18.8" rx="5.2" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="8.4" cy="8.4" r="2.2"/><circle cx="12" cy="12" r="2.2"/><circle cx="15.6" cy="15.6" r="2.2"/></svg></button></div>
+        <div class="hint" id="h-imposters" data-t="imposters_h">Keep it under a third of the table</div>
+      </div>
       <div class="stepper" data-step="imposters" id="st-imposters">
-        <button data-d="-1" aria-label="fewer">−</button><button class="val" id="v-imposters" data-rnd="randImp"><svg class="die" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.6" y="2.6" width="18.8" height="18.8" rx="5.2" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="8.4" cy="8.4" r="2.2"/><circle cx="12" cy="12" r="2.2"/><circle cx="15.6" cy="15.6" r="2.2"/></svg><span>1</span></button><button data-d="1" aria-label="more">+</button>
+        <button data-d="-1" aria-label="fewer">−</button><div class="val" id="v-imposters">1</div><button data-d="1" aria-label="more">+</button>
       </div>
     </div>
 
     <div class="field" id="f-blackmail">
-      <div><div class="label" data-t="bm">Blackmailed</div><div class="hint" id="h-blackmail" data-t="bm_h">Honest, but must smuggle a word in</div></div>
+      <div>
+        <div class="label"><span data-t="bm">Blackmailed</span><button class="diebtn" id="d-blackmail" data-rnd="randBm"><svg class="die" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.6" y="2.6" width="18.8" height="18.8" rx="5.2" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="8.4" cy="8.4" r="2.2"/><circle cx="12" cy="12" r="2.2"/><circle cx="15.6" cy="15.6" r="2.2"/></svg></button></div>
+        <div class="hint" id="h-blackmail" data-t="bm_h">Honest, but must smuggle a word in</div>
+      </div>
       <div class="stepper" data-step="blackmail">
-        <button data-d="-1" aria-label="fewer">−</button><button class="val" id="v-blackmail" data-rnd="randBm"><svg class="die" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.6" y="2.6" width="18.8" height="18.8" rx="5.2" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="8.4" cy="8.4" r="2.2"/><circle cx="12" cy="12" r="2.2"/><circle cx="15.6" cy="15.6" r="2.2"/></svg><span>0</span></button><button data-d="1" aria-label="more">+</button>
+        <button data-d="-1" aria-label="fewer">−</button><div class="val" id="v-blackmail">0</div><button data-d="1" aria-label="more">+</button>
       </div>
     </div>
 
@@ -468,6 +474,11 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
     <div class="field" id="f-hintw">
       <div><div class="label" data-t="hintw">Imposter sees clue</div><div class="hint" data-t="hintw_h">One clue per word, only for them</div></div>
       <div class="switch on" id="sw-hintw"><i></i></div>
+    </div>
+
+    <div class="field" id="f-bmimp">
+      <div><div class="label" data-t="bmimp">Imposter sees blackmail</div><div class="hint" data-t="bmimp_h">Tells them the word to listen for</div></div>
+      <div class="switch on" id="sw-bmimp"><i></i></div>
     </div>
 
     <div class="field" id="f-hstyle">
@@ -608,7 +619,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "6.3";
+const APP_VERSION = "6.4";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list
@@ -711,6 +722,7 @@ vote:"Voting",vote_h:"Accuse before the reveal",vote_q:"Who is the imposter?",
 vote_note:"Everyone votes once",thevote:"the vote",
 caught:"Caught!",partial:"Half right",missed:"Got away!",
 bm:"Blackmailed",bm_h:"Honest, but must smuggle a word in",
+bmimp:"Imposter sees blackmail",bmimp_h:"Tells them the word to listen for",
 bm_you:"You are blackmailed to say the word:",bm_imp:"Somebody is blackmailed to say:",
 thebm:"blackmailed",
 tableline:"pass-and-play · {n} players"},
@@ -735,6 +747,7 @@ caught:"Ulovljeni!",partial:"Napola točno",missed:"Izvukli su se!",
 /* the badge is the noun, not the adjective - "ucijenjen/ucijenjena" would
    put a gender on whoever happens to be holding the phone */
 bm:"Ucijenjeni",bm_h:"Pošten je, ali mora ubaciti riječ",
+bmimp:"Uljez vidi ucjenu",bmimp_h:"Zna koju riječ čekati",
 bm_you:"Ucijenjen si da kažeš riječ:",bm_imp:"Netko je ucijenjen da kaže:",
 thebm:"ucijenjeni",
 tableline:"igra u krug · {n} igrača"}
@@ -742,7 +755,7 @@ tableline:"igra u krug · {n} igrača"}
 
 /* ============ state ============ */
 /* cats: which categories are in play. empty means all of them. */
-const S = {players:4, imposters:1, blackmail:0, randImp:false, randBm:false, touched:"", minutes:4, hintCat:true, hintMode:"imposter", hintStyle:"simple", vote:true, mode:"classic", lang:"hr", cats:[], names:[],
+const S = {players:4, imposters:1, blackmail:0, randImp:false, randBm:false, touched:"", bmImp:true, minutes:4, hintCat:true, hintMode:"imposter", hintStyle:"simple", vote:true, mode:"classic", lang:"hr", cats:[], names:[],
            word:"", twin:"", clue:"", catKey:"", impSet:new Set(), bmSet:new Set(), bmWords:{},
            votes:null, seat:1, first:1, left:0, timer:null, running:false};
 
@@ -762,7 +775,7 @@ function save(){
     localStorage.setItem(SAVE_KEY, JSON.stringify({
       players:S.players, imposters:S.imposters, blackmail:S.blackmail,
       randImp:S.randImp, randBm:S.randBm, minutes:S.minutes,
-      hintCat:S.hintCat, hintMode:S.hintMode, hintStyle:S.hintStyle, vote:S.vote, mode:S.mode, lang:S.lang, cats:S.cats,
+      hintCat:S.hintCat, hintMode:S.hintMode, hintStyle:S.hintStyle, bmImp:S.bmImp, vote:S.vote, mode:S.mode, lang:S.lang, cats:S.cats,
       names:S.names.slice(0,16)
     }));
   }catch(e){}
@@ -787,6 +800,7 @@ function load(){
     if(num(d.minutes))   S.minutes   = d.minutes;
     if(typeof d.hintCat === "boolean") S.hintCat = d.hintCat;
     if(typeof d.vote === "boolean") S.vote = d.vote;
+    if(typeof d.bmImp === "boolean") S.bmImp = d.bmImp;
     if(d.mode === "classic" || d.mode === "undercover") S.mode = d.mode;
     if(["simple","niche","long","random"].indexOf(d.hintStyle) >= 0) S.hintStyle = d.hintStyle;
     /* "all" was dropped as an option - fold old saves onto imposter-only */
@@ -842,12 +856,14 @@ function paintText(){
    "≤0" says nothing that "0" does not, so the prefix is dropped there -
    but the die keeps reporting the setting truthfully, or tapping it at
    zero would look like a dead control. */
-function paintCount(sel, n, rnd){
+function paintCount(sel, dieSel, n, rnd){
   const el = $(sel);
-  el.querySelector("span").textContent = rnd && n > 0 ? "≤" + n : n;
+  el.textContent = rnd && n > 0 ? "≤" + n : n;
   el.classList.toggle("rand", rnd);
-  el.setAttribute("aria-pressed", rnd ? "true" : "false");
-  el.setAttribute("aria-label", t("upto"));
+  const die = $(dieSel);
+  die.classList.toggle("on", rnd);
+  die.setAttribute("aria-pressed", rnd ? "true" : "false");
+  die.setAttribute("aria-label", t("upto"));
 }
 
 function paintSetup(){
@@ -856,14 +872,15 @@ function paintSetup(){
      the deal, the vote and the reveal */
   document.documentElement.dataset.mode = S.mode;
   $("#v-players").textContent = S.players;
-  paintCount("#v-imposters", S.imposters, S.randImp);
-  paintCount("#v-blackmail", S.blackmail, S.randBm);
+  paintCount("#v-imposters", "#d-imposters", S.imposters, S.randImp);
+  paintCount("#v-blackmail", "#d-blackmail", S.blackmail, S.randBm);
   $("#v-minutes").textContent = S.minutes;
   $("#app-version").textContent = "v" + APP_VERSION;
   $("#eyebrow-line").textContent = t("tableline").replace("{n}", S.players);
   $("#sw-hint").classList.toggle("on", S.hintCat);
   $("#sw-hintw").classList.toggle("on", S.hintMode === "imposter");
   $("#sw-vote").classList.toggle("on", S.vote);
+  $("#sw-bmimp").classList.toggle("on", S.bmImp);
   $$("#seg-mode button").forEach(b=>{
     b.textContent = t("m_" + b.dataset.mode);
     b.classList.toggle("on", b.dataset.mode === S.mode);
@@ -873,6 +890,10 @@ function paintSetup(){
   $("#f-hintw").style.display = clues ? "" : "none";
   /* and the style only matters while a clue is actually being handed over */
   $("#f-hstyle").style.display = clues && S.hintMode === "imposter" ? "" : "none";
+  /* nothing to tell the imposter about when no blackmail is being dealt -
+     and in undercover they are never told regardless, because being the one
+     seat that was told would say they are the odd one */
+  $("#f-bmimp").style.display = clues && S.blackmail > 0 ? "" : "none";
   $$("#seg-hstyle button").forEach(b=>{
     b.textContent = t("hs_" + b.dataset.hs);
     b.classList.toggle("on", b.dataset.hs === S.hintStyle);
@@ -884,8 +905,8 @@ function paintSetup(){
   /* after paintText, which rewrites every [data-t] from the table. a count
      that has become a ceiling explains itself where its own label lives,
      which is also how the tap teaches itself the first time. */
-  if(S.randImp && S.imposters) $("#h-imposters").textContent = t("upto_h");
-  if(S.randBm && S.blackmail) $("#h-blackmail").textContent = t("upto_h");
+  if(S.randImp) $("#h-imposters").textContent = t("upto_h");
+  if(S.randBm)  $("#h-blackmail").textContent = t("upto_h");
   save();
 }
 
@@ -1114,7 +1135,7 @@ function paintSeat(){
      are the odd one, and handing the blackmail word to exactly that seat
      would have said it out loud: you are the only person reading this, so
      you are the odd one. That is the one thing undercover must never leak. */
-  const task = isBm ? S.bmWords[S.seat] : (!und && isImp) ? someBm.join(" · ") : "";
+  const task = isBm ? S.bmWords[S.seat] : (!und && isImp && S.bmImp) ? someBm.join(" · ") : "";
   $("#front-task").style.display = task ? "" : "none";
   $("#task-label").textContent = task ? (isBm ? t("bm_you") : t("bm_imp")) : "";
   $("#task-word").textContent = task || "";
@@ -1466,16 +1487,19 @@ $$(".stepper").forEach(st=>{
     };
   });
 });
-/* tap the number itself to swap an exact count for a ceiling. each one
-   carries its own flag, so the imposters can be fixed while the number of
-   blackmailed stays secret, or the other way round. */
-$$(".stepper .val").forEach(b=>{
+/* the die swaps an exact count for a ceiling. it lives beside the name of
+   the thing it governs rather than beside the digit - it is a question
+   about the imposters, not about the number. each row carries its own
+   flag, so the imposters can be fixed while the number of blackmailed
+   stays secret, or the other way round. */
+$$(".diebtn").forEach(b=>{
   b.onclick = ()=>{ S[b.dataset.rnd] = !S[b.dataset.rnd]; buzz(14); paintSetup(); };
 });
 /* every setting answers with a short buzz, so a tap is felt as well as seen */
 $("#sw-hint").onclick  = ()=>{ S.hintCat = !S.hintCat; buzz(14); paintSetup(); };
 $("#sw-hintw").onclick = ()=>{ S.hintMode = S.hintMode==="imposter" ? "off" : "imposter"; buzz(14); paintSetup(); };
 $("#sw-vote").onclick  = ()=>{ S.vote = !S.vote; buzz(14); paintSetup(); };
+$("#sw-bmimp").onclick = ()=>{ S.bmImp = !S.bmImp; buzz(14); paintSetup(); };
 $$("#seg-lang button").forEach(b=>{
   b.onclick = ()=>{ S.lang = b.dataset.lang; buzz(10); paintSetup(); };
 });

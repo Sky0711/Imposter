@@ -615,16 +615,6 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
       </div>
     </div>
 
-    <div class="field stack" id="f-bira">
-      <div><div class="label" data-t="impbira">Imposter picks</div><div class="hint" data-t="impbira_h">Otherwise both land at random</div></div>
-      <div class="chips" id="chips-bira"></div>
-    </div>
-
-    <div class="field" id="f-suggest">
-      <div><div class="label" data-t="suggest">Offer a word</div><div class="hint" data-t="suggest_h">Keep it, or clear it and write your own</div></div>
-      <div class="switch" id="sw-suggest"><i></i></div>
-    </div>
-
     <div class="field">
       <div><div class="label" data-t="timer">Round timer</div><div class="hint" data-t="timer_h">Minutes of arguing. 0 turns it off.</div></div>
       <div class="stepper" data-step="minutes">
@@ -635,6 +625,16 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
     <div class="field">
       <div><div class="label" data-t="vote">Voting</div><div class="hint" data-t="vote_h">Accuse before the reveal</div></div>
       <div class="switch on" id="sw-vote"><i></i></div>
+    </div>
+
+    <div class="field stack" id="f-bira">
+      <div><div class="label" data-t="impbira">Imposter picks</div><div class="hint" data-t="impbira_h">Otherwise both land at random</div></div>
+      <div class="chips" id="chips-bira"></div>
+    </div>
+
+    <div class="field" id="f-suggest">
+      <div><div class="label" data-t="suggest">Offer a word</div><div class="hint" data-t="suggest_h">Keep it, or clear it and write your own</div></div>
+      <div class="switch" id="sw-suggest"><i></i></div>
     </div>
 
     <div class="field stack" id="f-sees">
@@ -823,7 +823,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "8.4";
+const APP_VERSION = "8.5";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list

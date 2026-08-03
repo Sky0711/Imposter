@@ -301,6 +301,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .info.bm .v{
   font-family:var(--display);font-weight:800;font-size:clamp(20px,5.4vw,26px);
   line-height:1.15;letter-spacing:.01em;text-transform:uppercase;color:var(--bone);
+  white-space:pre-line;      /* the imposter's plants read one to a line */
 }
 /* when it is due, if the imposter set a time on it */
 .info.bm .when{
@@ -751,7 +752,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "7.5";
+const APP_VERSION = "7.6";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list
@@ -1462,7 +1463,7 @@ function takeWrite(){
 function allPlants(){
   const out = [];
   Object.keys(S.plants).forEach(k => (S.plants[k]||[]).forEach(p => {
-    if(p.word) out.push({from:parseInt(k,10), word:p.word, to:p.to||0, when:p.when||0});
+    if(p.word) out.push({from:parseInt(k,10), word:p.word, to:p.to||0, when:p.when||0, ref:p});
   }));
   return out;
 }
@@ -1494,11 +1495,13 @@ function composeConspiracy(){
      so a collision costs the plant its aim and never the round. */
   plants.filter(p=>p.to && free.indexOf(p.to)>=0).forEach(p=>{
     take(p.to); S.bmSet.add(p.to); S.bmWords[p.to] = p.word; S.bmRound[p.to] = p.when;
+    p.ref.landed = p.to;
   });
   plants.filter(p=>!(p.to && S.bmWords[p.to] === p.word)).forEach(p=>{
     const to = free.shift();
     if(!to) return;                 /* clamp keeps this from happening */
     S.bmSet.add(to); S.bmWords[to] = p.word; S.bmRound[to] = p.when;
+    p.ref.landed = to;
   });
   S.first = 1+Math.floor(Math.random()*S.players);
   S.seat = 1;
@@ -1549,8 +1552,16 @@ function paintSeat(){
   /* the imposter reads their own plants back with the round each is due, so
      they know not just what to listen for but when it should land */
   const mine = con && isImp
-    ? (S.plants[S.seat]||[]).filter(p=>p.word)
-        .map(p=>p.word + (p.when ? " (" + p.when + ")" : "")).join(" · ")
+    ? (S.plants[S.seat]||[]).filter(p=>p.word).map(p=>{
+        let line = p.word + (p.when ? " (" + p.when + ")" : "");
+        /* Only when it did not land where they aimed it. Two imposters cannot
+           see each other's choices, so both may pick the same seat and one of
+           them has to be moved; saying nothing would leave them watching a
+           person who is carrying nothing. Silent where the aim held, since
+           they already know that seat - they chose it. */
+        if(S.bmPick && p.landed && p.landed !== p.to) line += " → " + seatLabel(p.landed);
+        return line;
+      }).join("\n")
     : "";
   const task = isBm ? S.bmWords[S.seat]
              : mine ? mine

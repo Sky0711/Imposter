@@ -628,7 +628,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
     </div>
 
     <div class="field stack" id="f-bira">
-      <div><div class="label" data-t="impbira">Imposter picks</div><div class="hint" data-t="impbira_h">Otherwise both land at random</div></div>
+      <div><div class="label" data-t="impadv">Imposter advantages</div><div class="hint" data-t="impadv_h">What the imposter gets to choose</div></div>
       <div class="chips" id="chips-bira"></div>
     </div>
 
@@ -823,7 +823,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "8.5";
+const APP_VERSION = "8.6";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list
@@ -937,8 +937,8 @@ preset:"Already chosen — touch it only if you want it different.",
 tooshort:"A word needs at least two letters.",
 dupword:"Two of your words are the same — make one different.",
 impsees:"Imposter sees",impsees_h:"What they get beside the question mark",
-impbira:"Imposter picks",impbira_h:"Otherwise both land at random",
-f_cat:"Category",f_clue:"Clue",f_bm:"Blackmail",f_who:"Who says it",f_when:"Which round",
+impadv:"Imposter advantages",impadv_h:"What the imposter gets to choose",
+f_cat:"Category",f_clue:"Clue",f_bm:"Blackmail",f_who:"Picks who",f_when:"Picks the round",
 nonames:"none yet",suggest:"Offer a word",suggest_h:"Keep it, or clear it and write your own",clearw:"clear",
 bmwhen:"Imposter picks the round",bmwhen_h:"Which round the word is due",
 inround:"at round {n}",wready:"Add your word",note_write:"Nobody else looks.",
@@ -980,8 +980,8 @@ preset:"Već je odabrano — diraj samo ako želiš drukčije.",
 tooshort:"Riječ mora imati barem dva slova.",
 dupword:"Dvije iste riječi — napiši drukčiju.",
 impsees:"Uljez vidi",impsees_h:"Što dobiva uz upitnik",
-impbira:"Uljez bira",impbira_h:"Inače oboje ide nasumično",
-f_cat:"Kategoriju",f_clue:"Natuknicu",f_bm:"Ucjenu",f_who:"Kome",f_when:"Koji krug",
+impadv:"Prednosti uljeza",impadv_h:"Što uljez smije birati",
+f_cat:"Kategoriju",f_clue:"Natuknicu",f_bm:"Ucjenu",f_who:"Bira kome",f_when:"Bira krug",
 nonames:"nema ih",suggest:"Ponudi riječ",suggest_h:"Ostavi ju ili obriši i napiši svoju",clearw:"obriši",
 bmwhen:"Uljez bira kad",bmwhen_h:"U kojem krugu riječ mora pasti",
 inround:"u {n}. krugu",wready:"Dodaj riječ",note_write:"Nitko drugi ne gleda.",

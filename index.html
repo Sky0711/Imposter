@@ -120,16 +120,65 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .spacer{flex:1;min-height:16px}
 
 /* ---- setup ---- */
+/* A row whose control is a set of chips rather than one switch: the label
+   sits above and the chips run the width beneath it. Five rows asking the
+   same question five times became two rows asking it once each. */
+/* the chip rows put their control under the label instead of beside it */
+.field.stack{grid-template-columns:minmax(0,1fr)}
+.field.stack > :last-child{grid-column:1;grid-row:3;justify-self:stretch;margin-top:12px}
+
+/* Names and categories are set once and then never touched, so they fold
+   away behind a line that reports what they are set to. */
+.fold{
+  display:flex;align-items:center;gap:10px;width:100%;
+  padding:16px 4px;border-bottom:1px solid rgba(244,236,224,.10);
+  text-align:left;
+}
+.fold .chev{
+  font-size:22px;line-height:1;color:var(--dim);flex:none;width:14px;
+  transition:transform .18s ease;
+}
+.fold[aria-expanded="true"] .chev{transform:rotate(90deg)}
+.foldname{
+  font-family:var(--body);font-size:13px;font-weight:600;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--dim);flex:none;
+}
+.foldsum{
+  font-size:14.5px;font-weight:600;color:var(--accent);
+  margin-left:auto;text-align:right;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.fold:active{background:var(--velvet)}
+.names[hidden],.chips[hidden]{display:none}
+
+/* The button that starts the game rides along the foot of the screen, so a
+   night where nothing changes costs no scrolling at all. The fade lets the
+   last row pass out of sight underneath it rather than colliding with it. */
+.dealbar{
+  position:sticky;z-index:5;
+  bottom:calc(env(safe-area-inset-bottom) * -1 - 18px);
+  margin:20px -20px calc(env(safe-area-inset-bottom) * -1 - 18px);
+  padding:22px 20px calc(env(safe-area-inset-bottom) + 18px);
+  background:linear-gradient(180deg, rgba(26,15,46,0) 0%, var(--ink) 34%, var(--ink) 100%);
+}
 /* label and control share a row when they fit; the control drops to its own
    line when they do not, so bigger targets never push off a narrow screen */
+/* Two columns: the name and its line on the left, the control on the right,
+   the control centred against both. As a flex row the label claimed the whole
+   width and pushed every stepper onto a line of its own, which cost fifty
+   pixels a row for the sake of one number. display:contents lets the
+   label/hint wrapper hand its two children straight to this grid, so the
+   markup did not have to change to get out of its own way. */
 .field{
-  display:flex;align-items:center;justify-content:space-between;gap:12px 14px;
-  flex-wrap:wrap;
-  padding:15px 8px 15px 4px;
+  display:grid;grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;column-gap:14px;
+  padding:13px 8px 13px 4px;
   border-bottom:1px solid rgba(244,236,224,.10);
 }
-.field > :first-child{flex:1 1 165px;min-width:0}
-.field > :last-child{margin-left:auto}
+.field > div:first-child{display:contents}
+.field .label{grid-column:1;grid-row:1}
+.field .hint{grid-column:1;grid-row:2}
+.field > :last-child{grid-column:2;grid-row:1 / span 2;justify-self:end}
 /* nowrap, so the die and the eye stay on the line with the name they
    belong to rather than dropping under it on a narrow phone. the name
    itself may shrink and wrap - the controls keep their size */
@@ -532,7 +581,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
     <div style="height:14px"></div>
 
-    <div class="field">
+    <div class="field stack">
       <div><div class="label" data-t="mode">Game mode</div><div class="hint modehint" id="h-mode" data-t="mode_h">Three ways to play</div></div>
       <div class="seg" id="seg-mode">
         <button data-mode="classic">Classic</button><button data-mode="undercover">Undercover</button><button data-mode="conspiracy">Conspiracy</button>
@@ -566,19 +615,14 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
       </div>
     </div>
 
-    <div class="field" id="f-bmpick">
-      <div><div class="label" data-t="bmpick">Imposter picks the target</div><div class="hint" data-t="bmpick_h">Otherwise it lands at random</div></div>
-      <div class="switch" id="sw-bmpick"><i></i></div>
+    <div class="field stack" id="f-bira">
+      <div><div class="label" data-t="impbira">Imposter picks</div><div class="hint" data-t="impbira_h">Otherwise both land at random</div></div>
+      <div class="chips" id="chips-bira"></div>
     </div>
 
     <div class="field" id="f-suggest">
       <div><div class="label" data-t="suggest">Offer a word</div><div class="hint" data-t="suggest_h">Keep it, or clear it and write your own</div></div>
       <div class="switch" id="sw-suggest"><i></i></div>
-    </div>
-
-    <div class="field" id="f-bmwhen">
-      <div><div class="label" data-t="bmwhen">Imposter picks the round</div><div class="hint" data-t="bmwhen_h">Which round the word is due</div></div>
-      <div class="switch" id="sw-bmwhen"><i></i></div>
     </div>
 
     <div class="field">
@@ -593,22 +637,12 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
       <div class="switch on" id="sw-vote"><i></i></div>
     </div>
 
-    <div class="field" id="f-hintcat">
-      <div><div class="label" data-t="hint">Imposter sees category</div><div class="hint" data-t="hint_h">Gives them a fighting chance</div></div>
-      <div class="switch on" id="sw-hint"><i></i></div>
+    <div class="field stack" id="f-sees">
+      <div><div class="label" data-t="impsees">Imposter sees</div><div class="hint" data-t="impsees_h">What they get beside the question mark</div></div>
+      <div class="chips" id="chips-sees"></div>
     </div>
 
-    <div class="field" id="f-hintw">
-      <div><div class="label" data-t="hintw">Imposter sees clue</div><div class="hint" data-t="hintw_h">One clue per word, only for them</div></div>
-      <div class="switch on" id="sw-hintw"><i></i></div>
-    </div>
-
-    <div class="field" id="f-bmimp">
-      <div><div class="label" data-t="bmimp">Imposter sees blackmail</div><div class="hint" data-t="bmimp_h">Knows the word to listen for</div></div>
-      <div class="switch on" id="sw-bmimp"><i></i></div>
-    </div>
-
-    <div class="field" id="f-hstyle">
+    <div class="field stack" id="f-hstyle">
       <div><div class="label" data-t="hstyle">Clue style</div><div class="hint" id="h-hstyle" data-t="hstyle_h">How the imposter's clue reads</div></div>
       <div class="seg" id="seg-hstyle">
         <button data-hs="simple">Simple</button><button data-hs="niche">Niche</button><button data-hs="long">Long</button><button data-hs="random">Mix</button>
@@ -622,18 +656,25 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
       </div>
     </div>
 
-    <div style="height:18px"></div>
-    <div class="eyebrow" data-t="names">Names</div>
-    <div class="names" id="names"></div>
+    <button class="fold" id="fold-names" aria-expanded="false">
+      <span class="chev">›</span>
+      <span class="foldname" data-t="names">Names</span>
+      <span class="foldsum" id="sum-names"></span>
+    </button>
+    <div class="names" id="names" hidden></div>
 
     <div id="f-cats">
-      <div style="height:18px"></div>
-      <div class="eyebrow" data-t="category">Category</div>
-      <div class="chips" id="chips"></div>
+      <button class="fold" id="fold-cats" aria-expanded="false">
+        <span class="chev">›</span>
+        <span class="foldname" data-t="category">Category</span>
+        <span class="foldsum" id="sum-cats"></span>
+      </button>
+      <div class="chips" id="chips" hidden></div>
     </div>
 
-    <div class="spacer"></div>
-    <button class="btn" id="btn-deal" data-t="deal">Deal the cards</button>
+    <div class="dealbar">
+      <button class="btn" id="btn-deal" data-t="deal">Deal the cards</button>
+    </div>
   </section>
 
   <!-- DEAL -->
@@ -782,7 +823,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "8.3";
+const APP_VERSION = "8.4";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list
@@ -895,7 +936,10 @@ ask_to:"Who says it",ask_when:"At round",
 preset:"Already chosen — touch it only if you want it different.",
 tooshort:"A word needs at least two letters.",
 dupword:"Two of your words are the same — make one different.",
-suggest:"Offer a word",suggest_h:"Keep it, or clear it and write your own",clearw:"clear",
+impsees:"Imposter sees",impsees_h:"What they get beside the question mark",
+impbira:"Imposter picks",impbira_h:"Otherwise both land at random",
+f_cat:"Category",f_clue:"Clue",f_bm:"Blackmail",f_who:"Who says it",f_when:"Which round",
+nonames:"none yet",suggest:"Offer a word",suggest_h:"Keep it, or clear it and write your own",clearw:"clear",
 bmwhen:"Imposter picks the round",bmwhen_h:"Which round the word is due",
 inround:"at round {n}",wready:"Add your word",note_write:"Nobody else looks.",
 ask_word:"Write a secret word. One of the words written tonight becomes the round's.",
@@ -935,7 +979,10 @@ ask_to:"Tko je govori",ask_when:"U kojem krugu",
 preset:"Već je odabrano — diraj samo ako želiš drukčije.",
 tooshort:"Riječ mora imati barem dva slova.",
 dupword:"Dvije iste riječi — napiši drukčiju.",
-suggest:"Ponudi riječ",suggest_h:"Ostavi ju ili obriši i napiši svoju",clearw:"obriši",
+impsees:"Uljez vidi",impsees_h:"Što dobiva uz upitnik",
+impbira:"Uljez bira",impbira_h:"Inače oboje ide nasumično",
+f_cat:"Kategoriju",f_clue:"Natuknicu",f_bm:"Ucjenu",f_who:"Kome",f_when:"Koji krug",
+nonames:"nema ih",suggest:"Ponudi riječ",suggest_h:"Ostavi ju ili obriši i napiši svoju",clearw:"obriši",
 bmwhen:"Uljez bira kad",bmwhen_h:"U kojem krugu riječ mora pasti",
 inround:"u {n}. krugu",wready:"Dodaj riječ",note_write:"Nitko drugi ne gleda.",
 ask_word:"Napiši tajnu riječ. Jedna od večerašnjih riječi bit će rundina.",
@@ -948,7 +995,7 @@ tableline:"igra u krug · {n} igrača"}
 
 /* ============ state ============ */
 /* cats: which categories are in play. empty means all of them. */
-const S = {players:4, imposters:1, blackmail:0, randImp:false, randBm:false, touched:"", bmImp:true, bmPick:false, bmWhen:false, suggest:false, minutes:4, hintCat:true, hintMode:"imposter", hintStyle:"simple", vote:true, mode:"classic", lang:"hr", cats:[], names:[],
+const S = {players:4, imposters:1, blackmail:0, randImp:false, randBm:false, touched:"", bmImp:true, bmPick:false, bmWhen:false, suggest:false, openNames:false, openCats:false, minutes:4, hintCat:true, hintMode:"imposter", hintStyle:"simple", vote:true, mode:"classic", lang:"hr", cats:[], names:[],
            word:"", twin:"", clue:"", catKey:"", impSet:new Set(), bmSet:new Set(), bmWords:{},
            /* conspiracy: what each seat wrote, and what each imposter planted */
            pool:{}, plants:{}, bmRound:{}, offered:[], wseat:1,
@@ -970,7 +1017,7 @@ function save(){
     localStorage.setItem(SAVE_KEY, JSON.stringify({
       players:S.players, imposters:S.imposters, blackmail:S.blackmail,
       randImp:S.randImp, randBm:S.randBm, minutes:S.minutes,
-      hintCat:S.hintCat, hintMode:S.hintMode, hintStyle:S.hintStyle, bmImp:S.bmImp, bmPick:S.bmPick, bmWhen:S.bmWhen, suggest:S.suggest, vote:S.vote, mode:S.mode, lang:S.lang, cats:S.cats,
+      hintCat:S.hintCat, hintMode:S.hintMode, hintStyle:S.hintStyle, bmImp:S.bmImp, bmPick:S.bmPick, bmWhen:S.bmWhen, suggest:S.suggest, openNames:S.openNames, openCats:S.openCats, vote:S.vote, mode:S.mode, lang:S.lang, cats:S.cats,
       names:S.names.slice(0,16)
     }));
   }catch(e){}
@@ -999,6 +1046,8 @@ function load(){
     if(typeof d.bmPick === "boolean") S.bmPick = d.bmPick;
     if(typeof d.bmWhen === "boolean") S.bmWhen = d.bmWhen;
     if(typeof d.suggest === "boolean") S.suggest = d.suggest;
+    if(typeof d.openNames === "boolean") S.openNames = d.openNames;
+    if(typeof d.openCats === "boolean") S.openCats = d.openCats;
     if(["classic","undercover","conspiracy"].indexOf(d.mode) >= 0) S.mode = d.mode;
     if(["simple","niche","long","random"].indexOf(d.hintStyle) >= 0) S.hintStyle = d.hintStyle;
     /* "all" was dropped as an option - fold old saves onto imposter-only */
@@ -1123,10 +1172,7 @@ function paintSetup(){
   $("#v-minutes").textContent = S.minutes;
   $("#app-version").textContent = "v" + APP_VERSION;
   $("#eyebrow-line").textContent = t("tableline").replace("{n}", S.players);
-  $("#sw-hint").classList.toggle("on", S.hintCat);
-  $("#sw-hintw").classList.toggle("on", S.hintMode === "imposter");
   $("#sw-vote").classList.toggle("on", S.vote);
-  $("#sw-bmimp").classList.toggle("on", S.bmImp);
   $$("#seg-mode button").forEach(b=>{
     b.textContent = t("m_" + b.dataset.mode);
     b.classList.toggle("on", b.dataset.mode === S.mode);
@@ -1136,31 +1182,18 @@ function paintSetup(){
      blackmail count to set - there it is one planted word per imposter, and
      the imposter needs no telling about a word they wrote themselves. */
   const con = S.mode === "conspiracy";
-  $("#f-hintcat").style.display   = con ? "none" : "";
   $("#f-cats").style.display      = con ? "none" : "";
   /* the count row stays, but in conspiracy it counts something else: not how
      many seats are blackmailed, but how many words each imposter plants */
   $("#f-blackmail").style.display = "";
   /* and who they land on is only a question worth asking where somebody is
      there to answer it */
-  $("#f-bmpick").style.display = con ? "" : "none";
-  $("#sw-bmpick").classList.toggle("on", S.bmPick);
-  $("#f-bmwhen").style.display = con ? "" : "none";
-  $("#sw-bmwhen").classList.toggle("on", S.bmWhen);
   $("#f-suggest").style.display = con ? "" : "none";
   $("#sw-suggest").classList.toggle("on", S.suggest);
   /* no clues at all in undercover - the other word is the clue */
   const clues = S.mode !== "undercover" && !con;
-  $("#f-hintw").style.display = clues ? "" : "none";
   /* and the style only matters while a clue is actually being handed over */
   $("#f-hstyle").style.display = clues && S.hintMode === "imposter" ? "" : "none";
-  /* shown wherever its sibling above is shown, which is the point of them
-     sitting together. it was hidden while the blackmail count sat at zero -
-     but zero is the default, so the setting could not be found at all, and
-     raising the imposters can push that count to zero on its own and take
-     the row away while you are looking at it. only undercover hides it, and
-     for the real reason: there the imposter is never told regardless. */
-  $("#f-bmimp").style.display = clues ? "" : "none";
   $$("#seg-hstyle button").forEach(b=>{
     b.textContent = t("hs_" + b.dataset.hs);
     b.classList.toggle("on", b.dataset.hs === S.hintStyle);
@@ -1168,6 +1201,7 @@ function paintSetup(){
   $$("#seg-lang button").forEach(b=>b.classList.toggle("on", b.dataset.lang===S.lang));
   paintNames();
   paintChips();
+  paintFlags();
   paintText();
   /* Everything from here runs after paintText, which rewrites every [data-t]
      element straight from the table and would put the stock wording back. */
@@ -1191,6 +1225,9 @@ function paintSetup(){
   /* a lit die is the only thing either line has left to explain */
   if(S.randImp) $("#h-imposters").textContent = t("upto_h");
   if(S.randBm)  $("#h-blackmail").textContent = t("upto_h");
+  /* after paintText too: the fold labels are [data-t] and the summaries sit
+     in the same row, so both have to be written once the table has had its say */
+  paintFolds();
   save();
 }
 
@@ -1215,6 +1252,61 @@ function paintNames(){
     box.appendChild(row);
   }
   Array.from(box.querySelectorAll("input")).forEach(inp=>{ inp.placeholder = t("nameph"); });
+}
+
+/* The flags that used to be a switch each. Same booleans, one row instead of
+   five - they were always one question, so they now look like one. */
+function paintFlags(){
+  const und = S.mode === "undercover", con = S.mode === "conspiracy";
+  const mk = (box, label, on, toggle)=>{
+    const b = document.createElement("button");
+    b.className = "chip" + (on ? " on" : "");
+    b.textContent = label;
+    b.onclick = ()=>{ toggle(); buzz(10); paintSetup(); };
+    box.appendChild(b);
+  };
+  /* what the imposter is handed. no category and no clues in conspiracy, and
+     no clue at all in undercover, so the row shrinks to what that mode has */
+  const sees = $("#chips-sees"); sees.innerHTML = "";
+  $("#f-sees").style.display = con ? "none" : "";
+  if(!con){
+    mk(sees, t("f_cat"),  S.hintCat, ()=>{ S.hintCat = !S.hintCat; });
+    if(!und){
+      mk(sees, t("f_clue"), S.hintMode === "imposter",
+         ()=>{ S.hintMode = S.hintMode === "imposter" ? "off" : "imposter"; });
+      mk(sees, t("f_bm"),   S.bmImp, ()=>{ S.bmImp = !S.bmImp; });
+    }
+  }
+  /* and what they get to choose, which only conspiracy asks */
+  const bira = $("#chips-bira"); bira.innerHTML = "";
+  $("#f-bira").style.display = con ? "" : "none";
+  if(con){
+    mk(bira, t("f_who"),  S.bmPick, ()=>{ S.bmPick = !S.bmPick; });
+    mk(bira, t("f_when"), S.bmWhen, ()=>{ S.bmWhen = !S.bmWhen; });
+  }
+}
+
+/* a folded block reports what it is set to, so it can stay shut */
+function paintFolds(){
+  const fold = (btn, box, open, sum)=>{
+    $(btn).setAttribute("aria-expanded", open ? "true" : "false");
+    $(box).hidden = !open;
+    $(sum).textContent = open ? "" : sum === "#sum-names" ? namesSummary() : catsSummary();
+  };
+  fold("#fold-names", "#names", S.openNames, "#sum-names");
+  fold("#fold-cats",  "#chips", S.openCats,  "#sum-cats");
+}
+function namesSummary(){
+  const got = [];
+  for(let i=1;i<=S.players;i++){ const n = nameOf(i); if(n) got.push(n); }
+  if(!got.length) return t("nonames");
+  return got.slice(0,3).join(", ") + (got.length > 3 ? " +" + (got.length-3) : "");
+}
+function catsSummary(){
+  const avail = catsFor();
+  const picked = S.cats.filter(k=>avail.some(c=>c.key===k));
+  if(!picked.length) return t("mix");
+  return picked.map(k=>{ const c = CATS.find(x=>x.key===k); return c ? c[S.lang] : k; }).join(", ");
 }
 
 function paintChips(){
@@ -2117,12 +2209,9 @@ $$(".diebtn").forEach(b=>{
   b.onclick = ()=>{ S[b.dataset.rnd] = !S[b.dataset.rnd]; buzz(14); paintSetup(); };
 });
 /* every setting answers with a short buzz, so a tap is felt as well as seen */
-$("#sw-hint").onclick  = ()=>{ S.hintCat = !S.hintCat; buzz(14); paintSetup(); };
-$("#sw-hintw").onclick = ()=>{ S.hintMode = S.hintMode==="imposter" ? "off" : "imposter"; buzz(14); paintSetup(); };
 $("#sw-vote").onclick  = ()=>{ S.vote = !S.vote; buzz(14); paintSetup(); };
-$("#sw-bmimp").onclick = ()=>{ S.bmImp = !S.bmImp; buzz(14); paintSetup(); };
-$("#sw-bmpick").onclick = ()=>{ S.bmPick = !S.bmPick; buzz(14); paintSetup(); };
-$("#sw-bmwhen").onclick = ()=>{ S.bmWhen = !S.bmWhen; buzz(14); paintSetup(); };
+$("#fold-names").onclick = ()=>{ S.openNames = !S.openNames; buzz(10); paintSetup(); };
+$("#fold-cats").onclick  = ()=>{ S.openCats  = !S.openCats;  buzz(10); paintSetup(); };
 $("#sw-suggest").onclick = ()=>{ S.suggest = !S.suggest; buzz(14); paintSetup(); };
 $$("#seg-lang button").forEach(b=>{
   b.onclick = ()=>{ S.lang = b.dataset.lang; buzz(10); paintSetup(); };

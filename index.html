@@ -548,7 +548,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
     </div>
 
     <div class="field" id="f-bmwhen">
-      <div><div class="label" data-t="bmwhen">Imposter picks the round</div><div class="hint" data-t="bmwhen_h">Which time round the word is due</div></div>
+      <div><div class="label" data-t="bmwhen">Imposter picks the round</div><div class="hint" data-t="bmwhen_h">Which round the word is due</div></div>
       <div class="switch" id="sw-bmwhen"><i></i></div>
     </div>
 
@@ -751,7 +751,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* shown on the setup screen so you can always tell which build is installed.
    bump this AND the CACHE name in sw.js together when deploying. */
-const APP_VERSION = "7.4";
+const APP_VERSION = "7.5";
 
 /* ============ words ============ */
 /* a category may carry langs:["en"] (or ["hr"]) to exist in that word list
@@ -860,9 +860,9 @@ bm:"Blackmailed",bm_h:"Honest, but must smuggle a word in",
 bmimp:"Imposter sees blackmail",bmimp_h:"Knows the word to listen for",
 bmeach:"Blackmails",bmeach_h:"Everyone writes this many words",
 bmpick:"Imposter picks the target",bmpick_h:"Otherwise it lands at random",
-ask_to:"Who says it",ask_when:"Which time round",
-bmwhen:"Imposter picks the round",bmwhen_h:"Which time round the word is due",
-inround:"on time round {n}",wready:"Add your word",note_write:"Nobody else looks.",
+ask_to:"Who says it",ask_when:"At round",
+bmwhen:"Imposter picks the round",bmwhen_h:"Which round the word is due",
+inround:"at round {n}",wready:"Add your word",note_write:"Nobody else looks.",
 ask_word:"Write a secret word. One of the words written tonight becomes the round's.",
 ask_plant:"Write a word to plant. Somebody will be made to say it \u2014 and it will not be you.",
 wordph:"a word",bm_mine:"The blackmail you planted:",thewritten:"the words you wrote",
